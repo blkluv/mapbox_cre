@@ -1,21 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     
     <!-- Mapbox & What3Words -->
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://cdn.what3words.com/javascript-components@4-latest/dist/what3words/what3words.js?key=29IK5VZP"></script>
-    
-    <title>WEEDW3W Dispensary Map</title>
-    
+
+    <title>WEEDW3W Monopoly</title>
+
     <style>
-        body { margin: 0; padding: 0; background: #0a0a0a; }
-        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        body { margin: 0; padding: 0; background: #0a0a0a; font-family: Arial, sans-serif; }
+        #map { position: absolute; top: 50px; bottom: 0; width: 100%; }
+
+        /* Game Header */
+        #header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 50px;
+            background: linear-gradient(90deg, #00ffea, #ff00ff);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            z-index: 1000;
+        }
         
+        #header a {
+            color: #fff;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        #header a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* What3Words Search Box */
+        #search-container {
+            position: absolute;
+            top: 55px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+
+        #w3w-input {
+            width: 250px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #222;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+        }
+
         /* Marker Styling */
         .marker {
             background-size: cover;
@@ -33,13 +82,12 @@
         }
 
         /* Popup Styling */
-        .mapboxgl-popup {
-            max-width: 300px;
-            font: 14px/22px 'Arial', sans-serif;
+        .mapboxgl-popup-content {
             background: rgba(0, 0, 0, 0.8);
             color: #fff;
             border-radius: 10px;
             padding: 10px;
+            text-align: center;
         }
 
         .mapboxgl-popup-content img {
@@ -51,16 +99,29 @@
     </style>
 </head>
 <body>
+
+    <!-- Game Header -->
+    <div id="header">
+        <a href="#">🏠 Home</a>
+        <a href="#">🌿 Dispensaries</a>
+        <a href="#">🏆 Leaderboard</a>
+        <a href="#" onclick="rollDice()">🎲 Roll Dice</a>
+    </div>
+
+    <!-- What3Words Search -->
+    <div id="search-container">
+        <input id="w3w-input" type="text" placeholder="Enter What3Words (e.g. apple.banana.orange)" onkeypress="searchW3W(event)">
+    </div>
+
     <div id="map"></div>
 
     <script>
         mapboxgl.accessToken = "pk.eyJ1IjoiZjFrdW5pIiwiYSI6ImNsaTl3Mmg5bDI2Z3ozcG53NTFnYzkyOHcifQ.kO1fY4a4TraHhQxoLYwTEg";
 
-        // Initialize Map
         let map = new mapboxgl.Map({
             container: "map",
-            style: "mapbox://styles/mapbox/dark-v11",  // Futuristic dark theme
-            center: [-74.4277, 39.3643], // Atlantic City
+            style: "mapbox://styles/mapbox/dark-v11",
+            center: [-74.4277, 39.3643],
             zoom: 13
         });
 
@@ -98,75 +159,26 @@
                 .addTo(map);
         });
 
-        // Glowing Roads Effect
-        map.on("load", function () {
-            map.addLayer({
-                id: "glowing-roads",
-                type: "line",
-                source: "composite",
-                "source-layer": "road",
-                paint: {
-                    "line-color": "#00ffea",
-                    "line-width": 3,
-                    "line-blur": 4
+        // Search What3Words Address
+        function searchW3W(event) {
+            if (event.key === "Enter") {
+                let words = document.getElementById("w3w-input").value.trim();
+                if (words) {
+                    what3words.api.convertToCoordinates({ words: words })
+                        .then(response => {
+                            if (response && response.coordinates) {
+                                let { lat, lng } = response.coordinates;
+                                map.flyTo({ center: [lng, lat], zoom: 15 });
+                            } else {
+                                alert("Invalid What3Words address.");
+                            }
+                        })
+                        .catch(() => alert("Error fetching What3Words location."));
                 }
-            });
-
-            // 3D Buildings
-            map.addLayer({
-                id: "3d-buildings",
-                type: "fill-extrusion",
-                source: "composite",
-                "source-layer": "building",
-                paint: {
-                    "fill-extrusion-color": "#ff00ff",
-                    "fill-extrusion-height": ["get", "height"],
-                    "fill-extrusion-opacity": 0.7
-                }
-            });
-        });
-
-        // What3Words Grid System
-        map.on("load", drawGrid).on("move", drawGrid);
-
-        function drawGrid() {
-            const zoom = map.getZoom();
-            const loadFeatures = zoom > 11;
-
-            if (loadFeatures) {
-                var ne = map.getBounds().getNorthEast();
-                var sw = map.getBounds().getSouthWest();
-
-                what3words.api
-                    .gridSectionGeoJson({
-                        southwest: { lat: sw.lat, lng: sw.lng },
-                        northeast: { lat: ne.lat, lng: ne.lng }
-                    })
-                    .then(function (data) {
-                        var grid = map.getSource("grid");
-                        if (!grid) {
-                            map.addSource("grid", { type: "geojson", data: data });
-                            map.addLayer({
-                                id: "grid_layer",
-                                type: "line",
-                                source: "grid",
-                                layout: { "line-join": "round", "line-cap": "round" },
-                                paint: { "line-color": "#ffcc00", "line-width": 1 }
-                            });
-                        } else {
-                            map.getSource("grid").setData(data);
-                        }
-                    })
-                    .catch(console.error);
-            }
-
-            var grid_layer = map.getLayer("grid_layer");
-            if (typeof grid_layer !== "undefined") {
-                map.setLayoutProperty("grid_layer", "visibility", loadFeatures ? "visible" : "none");
             }
         }
 
-        // Interactive Dice Roll Effect (Example Feature)
+        // Dice Roll Effect
         function rollDice() {
             const roll = Math.floor(Math.random() * 6) + 1;
             new mapboxgl.Popup()
@@ -174,10 +186,6 @@
                 .setHTML(`<h2>🎲 You rolled a ${roll}!</h2>`)
                 .addTo(map);
         }
-
-        document.addEventListener("keydown", function (event) {
-            if (event.key === "r") { rollDice(); } // Press 'R' to roll dice
-        });
     </script>
 </body>
 </html>
