@@ -4,22 +4,49 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    
+    <!-- Mapbox & What3Words -->
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
     <script src="https://cdn.what3words.com/javascript-components@4-latest/dist/what3words/what3words.js?key=29IK5VZP"></script>
+    
     <title>WEEDW3W Dispensary Map</title>
+    
     <style>
-        body { margin: 0; padding: 0; }
+        body { margin: 0; padding: 0; background: #0a0a0a; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        
+        /* Marker Styling */
         .marker {
             background-size: cover;
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            box-shadow: 0px 0px 10px #00ffea;
             cursor: pointer;
+            animation: pulse 1.5s infinite alternate;
         }
+
+        @keyframes pulse {
+            0% { box-shadow: 0px 0px 5px #00ffea; }
+            100% { box-shadow: 0px 0px 15px #00ffea; }
+        }
+
+        /* Popup Styling */
         .mapboxgl-popup {
-            max-width: 400px;
-            font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+            max-width: 300px;
+            font: 14px/22px 'Arial', sans-serif;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .mapboxgl-popup-content img {
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
         }
     </style>
 </head>
@@ -28,47 +55,78 @@
 
     <script>
         mapboxgl.accessToken = "pk.eyJ1IjoiZjFrdW5pIiwiYSI6ImNsaTl3Mmg5bDI2Z3ozcG53NTFnYzkyOHcifQ.kO1fY4a4TraHhQxoLYwTEg";
+
+        // Initialize Map
         let map = new mapboxgl.Map({
             container: "map",
-            style: "mapbox://styles/mapbox/streets-v11", // Using a more recent style
-            center: [-74.4277, 39.3643], // Atlantic City coordinates [lng, lat]
-            zoom: 13 // Adjusted zoom level
+            style: "mapbox://styles/mapbox/dark-v11",  // Futuristic dark theme
+            center: [-74.4277, 39.3643], // Atlantic City
+            zoom: 13
         });
+
         map.addControl(new mapboxgl.NavigationControl());
 
-        // Dispensary data (replace with actual data)
+        // Dispensary Data
         const dispensaries = [
             {
                 name: "Dispensary A",
                 location: [-74.4300, 39.3680],
-                image: "dispensary_a.jpg", // Replace with image URL
-                info: "Dispensary A info and sales details."
+                image: "dispensary_a.jpg",
+                info: "Best deals on edibles & flowers!"
             },
             {
                 name: "Dispensary B",
                 location: [-74.4250, 39.3620],
-                image: "dispensary_b.jpg", // Replace with image URL
-                info: "Dispensary B info and sales details."
+                image: "dispensary_b.jpg",
+                info: "Premium organic strains available."
             },
-            // Add more dispensaries as needed
         ];
 
-        // Add markers for each dispensary
+        // Add Neon Markers
         dispensaries.forEach(dispensary => {
             const marker = document.createElement('div');
             marker.className = 'marker';
-            marker.style.backgroundImage = 'url(weed_emoji.png)'; // Replace with your emoji image
+            marker.style.backgroundImage = 'url(weed_emoji.png)';
+
             new mapboxgl.Marker(marker)
                 .setLngLat(dispensary.location)
                 .setPopup(new mapboxgl.Popup().setHTML(`
-                    <img src="${dispensary.image}" style="width:100%; max-height:200px; object-fit:cover;">
+                    <img src="${dispensary.image}" />
                     <h3>${dispensary.name}</h3>
                     <p>${dispensary.info}</p>
                 `))
                 .addTo(map);
         });
 
-        // What3Words grid (optional)
+        // Glowing Roads Effect
+        map.on("load", function () {
+            map.addLayer({
+                id: "glowing-roads",
+                type: "line",
+                source: "composite",
+                "source-layer": "road",
+                paint: {
+                    "line-color": "#00ffea",
+                    "line-width": 3,
+                    "line-blur": 4
+                }
+            });
+
+            // 3D Buildings
+            map.addLayer({
+                id: "3d-buildings",
+                type: "fill-extrusion",
+                source: "composite",
+                "source-layer": "building",
+                paint: {
+                    "fill-extrusion-color": "#ff00ff",
+                    "fill-extrusion-height": ["get", "height"],
+                    "fill-extrusion-opacity": 0.7
+                }
+            });
+        });
+
+        // What3Words Grid System
         map.on("load", drawGrid).on("move", drawGrid);
 
         function drawGrid() {
@@ -86,14 +144,14 @@
                     })
                     .then(function (data) {
                         var grid = map.getSource("grid");
-                        if (grid === undefined) {
+                        if (!grid) {
                             map.addSource("grid", { type: "geojson", data: data });
                             map.addLayer({
                                 id: "grid_layer",
                                 type: "line",
                                 source: "grid",
                                 layout: { "line-join": "round", "line-cap": "round" },
-                                paint: { "line-color": "#777", "line-width": 0.5 }
+                                paint: { "line-color": "#ffcc00", "line-width": 1 }
                             });
                         } else {
                             map.getSource("grid").setData(data);
@@ -107,6 +165,19 @@
                 map.setLayoutProperty("grid_layer", "visibility", loadFeatures ? "visible" : "none");
             }
         }
+
+        // Interactive Dice Roll Effect (Example Feature)
+        function rollDice() {
+            const roll = Math.floor(Math.random() * 6) + 1;
+            new mapboxgl.Popup()
+                .setLngLat(map.getCenter())
+                .setHTML(`<h2>🎲 You rolled a ${roll}!</h2>`)
+                .addTo(map);
+        }
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "r") { rollDice(); } // Press 'R' to roll dice
+        });
     </script>
 </body>
 </html>
