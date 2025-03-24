@@ -127,26 +127,24 @@
 
         map.addControl(new mapboxgl.NavigationControl());
 
-        // Dispensary Data
         const dispensaries = [
-            {
-                name: "High Rollers Atlantic City Dispensary",
-                location: [39.354261, -74.448344],
-                image: "https://i.imgur.com/RjWVKhN.png",
-                info: "///film.client.darker 50% OFF",
-                website: "https://highrollersac.com",
-                video: "https://gateway.pinata.cloud/ipfs/QmYourVideoHash"
-            },
-            {
-                name: "PPP Dispensary",
-                location: [39.354261, -74.448344],
-                image: "https://i.imgur.com/MffNBEx.png",
-                info: "///porch.descended.ties 50% OFF",
-                website: "https://pppdispensary.com",
-                video: "https://gateway.pinata.cloud/ipfs/QmAnotherVideoHash"
-            }
+        {
+        name: "High Rollers Atlantic City Dispensary",
+        location: [-74.448344, 39.354261], // Corrected order (lng, lat)
+        image: "https://i.imgur.com/RjWVKhN.png",
+        info: "///film.client.darker 50% OFF",
+        website: "https://highrollersac.com",
+        video: "https://gateway.pinata.cloud/ipfs/QmYourVideoHash"
+        },
+        {
+        name: "PPP Dispensary",
+        location: [-74.448344, 39.354261], // Corrected order (lng, lat)
+        image: "https://i.imgur.com/MffNBEx.png",
+        info: "///porch.descended.ties 50% OFF",
+        website: "https://pppdispensary.com",
+        video: "https://gateway.pinata.cloud/ipfs/QmAnotherVideoHash"
+        },
         ];
-
         // Add Neon Markers
         dispensaries.forEach(dispensary => {
             const marker = document.createElement("div");
