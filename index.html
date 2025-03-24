@@ -128,28 +128,29 @@
         map.addControl(new mapboxgl.NavigationControl());
 
         const dispensaries = [
-        {
-        name: "High Rollers Atlantic City Dispensary",
-        location: [-74.432096, 39.35798], 
-        image: "https://i.imgur.com/RjWVKhN.png",
-        info: "<a href="https://what3words.com/film.client.darker" target="_blank" style="color: #00ffea;"></a>///film.client.darker 50% OFF with WEEDW3W1",
-        website: "https://highrollersac.com",
-        video: "https://gateway.pinata.cloud/ipfs/QmYourVideoHash"
-        },
-        {
-        name: "PPP Dispensary",
-        location: [-74.448344, 39.354261], // Corrected order (lng, lat)
-        image: "https://i.imgur.com/MffNBEx.png",
-        info: "<a href="https://what3words.com/porch.descended.ties" target="_blank" style="color: #00ffea;"></a>///film.client.darker 50% OFF with WEEDW3W2",
-        website: "https://pppdispensary.com",
-        video: "https://gateway.pinata.cloud/ipfs/QmAnotherVideoHash"
-        },
+            {
+                name: "High Rollers Atlantic City Dispensary",
+                location: [-74.432096, 39.35798], 
+                image: "https://i.imgur.com/RjWVKhN.png",
+                info: 'Visit <a href="https://what3words.com/film.client.darker" target="_blank" style="color: #00ffea;">///film.client.darker</a> for 50% OFF with WEEDW3W1',
+                website: "https://highrollersac.com",
+                video: "https://gateway.pinata.cloud/ipfs/QmYourVideoHash"
+            },
+            {
+                name: "PPP Dispensary",
+                location: [-74.448344, 39.354261],
+                image: "https://i.imgur.com/MffNBEx.png",
+                info: 'Check out <a href="https://what3words.com/porch.descended.ties" target="_blank" style="color: #00ffea;">///porch.descended.ties</a> for 50% OFF with WEEDW3W2',
+                website: "https://pppdispensary.com",
+                video: "https://gateway.pinata.cloud/ipfs/QmAnotherVideoHash"
+            },
         ];
+
         // Add Neon Markers
         dispensaries.forEach(dispensary => {
             const marker = document.createElement("div");
             marker.className = "marker";
-            marker.style.backgroundImage = "url(https://i.imgur.com/UxGuwaM.png)"; // Replace with actual image URL if needed
+            marker.style.backgroundImage = "url(https://i.imgur.com/UxGuwaM.png)";
 
             new mapboxgl.Marker(marker)
                 .setLngLat(dispensary.location)
@@ -193,4 +194,3 @@
     </script>
 </body>
 </html>
-
