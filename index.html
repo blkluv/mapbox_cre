@@ -33,6 +33,7 @@
             font-size: 50px;
         }
     </style>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
 </head>
 <body>
     <h1>🎲 Roll the Dice to Find Weed Deals! 🎉</h1>
@@ -47,18 +48,106 @@
         mapboxgl.accessToken = "your_mapbox_token"; // Replace with your own Mapbox token
         let map = new mapboxgl.Map({
             container: "map",
-            style: "mapbox://styles/mapbox/streets-v11",
+            style: "mapbox://styles/mapbox/streets-v11", // Default style for simplicity
             center: [-74.4277, 39.3643], // Atlantic City coordinates
             zoom: 13
         });
 
+        // Modify the style to fit Monopoly theme
+        map.on('style.load', function() {
+            map.setStyle({
+                "version": 8,
+                "sources": {
+                    "openstreetmap": {
+                        "type": "vector",
+                        "url": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    }
+                },
+                "layers": [
+                    {
+                        "id": "background",
+                        "type": "background",
+                        "paint": {
+                            "background-color": "#f9f9f9" // light background color
+                        }
+                    },
+                    {
+                        "id": "land",
+                        "type": "fill",
+                        "source": "openstreetmap",
+                        "source-layer": "land",
+                        "paint": {
+                            "fill-color": "#ffcc00", // yellow for board-like feel
+                            "fill-opacity": 0.3
+                        }
+                    },
+                    {
+                        "id": "water",
+                        "type": "fill",
+                        "source": "openstreetmap",
+                        "source-layer": "water",
+                        "paint": {
+                            "fill-color": "#007acc", // blue like water
+                            "fill-opacity": 0.4
+                        }
+                    },
+                    {
+                        "id": "buildings",
+                        "type": "fill",
+                        "source": "openstreetmap",
+                        "source-layer": "buildings",
+                        "paint": {
+                            "fill-color": "#ff5733", // red for buildings (like houses on a board)
+                            "fill-opacity": 0.6
+                        }
+                    }
+                ]
+            });
+        });
+
         const dispensaries = [
-            { name: "Dispensary A", emoji: "🍃", location: "weed.love.good" },
-            { name: "Dispensary B", emoji: "🌱", location: "green.cure.spot" },
-            { name: "Dispensary C", emoji: "🌿", location: "fresh.mary.high" },
-            { name: "Dispensary D", emoji: "🍁", location: "high.bliss.grow" },
-            { name: "Dispensary E", emoji: "💨", location: "cloud.puff.smoke" },
-            { name: "Dispensary F", emoji: "🍄", location: "magic.vibes.trippy" }
+            { 
+                name: "Dispensary A", 
+                emoji: "🍃", 
+                location: "weed.love.good",
+                image: "dispensary_a.jpg", 
+                description: "Fresh and high-quality cannabis!" 
+            },
+            { 
+                name: "Dispensary B", 
+                emoji: "🌱", 
+                location: "green.cure.spot",
+                image: "dispensary_b.jpg", 
+                description: "Organic products for wellness." 
+            },
+            { 
+                name: "Dispensary C", 
+                emoji: "🌿", 
+                location: "fresh.mary.high",
+                image: "dispensary_c.jpg", 
+                description: "Premium flower and edibles." 
+            },
+            { 
+                name: "Dispensary D", 
+                emoji: "🍁", 
+                location: "high.bliss.grow",
+                image: "dispensary_d.jpg", 
+                description: "Relax and enjoy top-tier products." 
+            },
+            { 
+                name: "Dispensary E", 
+                emoji: "💨", 
+                location: "cloud.puff.smoke",
+                image: "dispensary_e.jpg", 
+                description: "Puff away your worries with our best strains." 
+            },
+            { 
+                name: "Dispensary F", 
+                emoji: "🍄", 
+                location: "magic.vibes.trippy",
+                image: "dispensary_f.jpg", 
+                description: "Explore the world of magic mushrooms!" 
+            }
         ];
 
         function rollDice() {
@@ -88,10 +177,41 @@
                     });
                     new mapboxgl.Marker()
                         .setLngLat([coords.lng, coords.lat])
+                        .setPopup(new mapboxgl.Popup({ offset: 25 })
+                            .setHTML(`
+                                <h3>${chosenDispensary.name}</h3>
+                                <img src="${chosenDispensary.image}" alt="${chosenDispensary.name}" style="width: 100%; height: auto;">
+                                <p>${chosenDispensary.description}</p>
+                            `))
                         .addTo(map);
                 })
                 .catch(console.error);
         }
+
+        // Adding clickable emoji markers to the map for all dispensaries
+        dispensaries.forEach(dispensary => {
+            const emojiMarker = document.createElement('div');
+            emojiMarker.className = 'emoji-marker';
+            emojiMarker.style.fontSize = '50px';
+            emojiMarker.innerHTML = dispensary.emoji;
+
+            const marker = new mapboxgl.Marker(emojiMarker)
+                .setLngLat([0, 0]) // Set coordinates here (replace with actual coordinates from What3Words)
+                .setPopup(new mapboxgl.Popup({ offset: 25 })
+                    .setHTML(`
+                        <h3>${dispensary.name}</h3>
+                        <img src="${dispensary.image}" alt="${dispensary.name}" style="width: 100%; height: auto;">
+                        <p>${dispensary.description}</p>
+                    `))
+                .addTo(map);
+
+            what3words.api.convertToCoordinates(dispensary.location)
+                .then(function (data) {
+                    const coords = data.coordinates;
+                    marker.setLngLat([coords.lng, coords.lat]);
+                })
+                .catch(console.error);
+        });
     </script>
 </body>
 </html>
