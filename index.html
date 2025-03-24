@@ -1,103 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-    <link
-      href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
-      rel="stylesheet"
-    />
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
     <script src="https://cdn.what3words.com/javascript-components@4-latest/dist/what3words/what3words.js?key=29IK5VZP"></script>
-    <title>Grid Section Map Overlay (Mapbox)</title>
+    <title>WEEDW3W Dispensary Map</title>
     <style>
-      body {
-        margin: 0;
-        padding: 0;
-      }
-      #map {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 100%;
-      }
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        .marker {
+            background-size: cover;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+        }
+        .mapboxgl-popup {
+            max-width: 400px;
+            font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+        }
     </style>
-  </head>
-  <body>
-    <div id="map"></div> <!-- Added this div to contain the map -->
+</head>
+<body>
+    <div id="map"></div>
 
     <script>
-      // Create the Mapbox
-      mapboxgl.accessToken =
-        "pk.eyJ1IjoiZjFrdW5pIiwiYSI6ImNsaTl3Mmg5bDI2Z3ozcG53NTFnYzkyOHcifQ.kO1fY4a4TraHhQxoLYwTEg";
-      let map = new mapboxgl.Map({
-        container: "map", // container id
-        style: "mapbox://styles/mapbox/streets-v9", // stylesheet location
-        center: [139.74349, 35.65447], // starting position [lng, lat]
-        zoom: 18 // starting zoom
-      });
-      map.addControl(new mapboxgl.NavigationControl());
+        mapboxgl.accessToken = "pk.eyJ1IjoiZjFrdW5pIiwiYSI6ImNsaTl3Mmg5bDI2Z3ozcG53NTFnYzkyOHcifQ.kO1fY4a4TraHhQxoLYwTEg";
+        let map = new mapboxgl.Map({
+            container: "map",
+            style: "mapbox://styles/mapbox/streets-v11", // Using a more recent style
+            center: [-74.4277, 39.3643], // Atlantic City coordinates [lng, lat]
+            zoom: 13 // Adjusted zoom level
+        });
+        map.addControl(new mapboxgl.NavigationControl());
 
-      // On map load and move events, invoke the drawGrid function
-      map.on("load", drawGrid).on("move", drawGrid);
+        // Dispensary data (replace with actual data)
+        const dispensaries = [
+            {
+                name: "Dispensary A",
+                location: [-74.4300, 39.3680],
+                image: "dispensary_a.jpg", // Replace with image URL
+                info: "Dispensary A info and sales details."
+            },
+            {
+                name: "Dispensary B",
+                location: [-74.4250, 39.3620],
+                image: "dispensary_b.jpg", // Replace with image URL
+                info: "Dispensary B info and sales details."
+            },
+            // Add more dispensaries as needed
+        ];
 
-      function drawGrid() {
-        const zoom = map.getZoom();
-        const loadFeatures = zoom > 11;
+        // Add markers for each dispensary
+        dispensaries.forEach(dispensary => {
+            const marker = document.createElement('div');
+            marker.className = 'marker';
+            marker.style.backgroundImage = 'url(weed_emoji.png)'; // Replace with your emoji image
+            new mapboxgl.Marker(marker)
+                .setLngLat(dispensary.location)
+                .setPopup(new mapboxgl.Popup().setHTML(`
+                    <img src="${dispensary.image}" style="width:100%; max-height:200px; object-fit:cover;">
+                    <h3>${dispensary.name}</h3>
+                    <p>${dispensary.info}</p>
+                `))
+                .addTo(map);
+        });
 
-        if (loadFeatures) {
-          var ne = map.getBounds().getNorthEast();
-          var sw = map.getBounds().getSouthWest();
+        // What3Words grid (optional)
+        map.on("load", drawGrid).on("move", drawGrid);
 
-          what3words.api
-            .gridSectionGeoJson({
-              southwest: {
-                lat: sw.lat,
-                lng: sw.lng
-              },
-              northeast: {
-                lat: ne.lat,
-                lng: ne.lng
-              }
-            })
-            .then(function (data) {
-              var grid = map.getSource("grid");
+        function drawGrid() {
+            const zoom = map.getZoom();
+            const loadFeatures = zoom > 11;
 
-              if (grid === undefined) {
-                map.addSource("grid", {
-                  type: "geojson",
-                  data: data
-                });
-                map.addLayer({
-                  id: "grid_layer",
-                  type: "line",
-                  source: "grid",
-                  layout: {
-                    "line-join": "round",
-                    "line-cap": "round"
-                  },
-                  paint: {
-                    "line-color": "#777",
-                    "line-width": 0.5
-                  }
-                });
-              } else {
-                map.getSource("grid").setData(data);
-              }
-            })
-            .catch(console.error);
+            if (loadFeatures) {
+                var ne = map.getBounds().getNorthEast();
+                var sw = map.getBounds().getSouthWest();
+
+                what3words.api
+                    .gridSectionGeoJson({
+                        southwest: { lat: sw.lat, lng: sw.lng },
+                        northeast: { lat: ne.lat, lng: ne.lng }
+                    })
+                    .then(function (data) {
+                        var grid = map.getSource("grid");
+                        if (grid === undefined) {
+                            map.addSource("grid", { type: "geojson", data: data });
+                            map.addLayer({
+                                id: "grid_layer",
+                                type: "line",
+                                source: "grid",
+                                layout: { "line-join": "round", "line-cap": "round" },
+                                paint: { "line-color": "#777", "line-width": 0.5 }
+                            });
+                        } else {
+                            map.getSource("grid").setData(data);
+                        }
+                    })
+                    .catch(console.error);
+            }
+
+            var grid_layer = map.getLayer("grid_layer");
+            if (typeof grid_layer !== "undefined") {
+                map.setLayoutProperty("grid_layer", "visibility", loadFeatures ? "visible" : "none");
+            }
         }
-
-        var grid_layer = map.getLayer("grid_layer");
-        if (typeof grid_layer !== "undefined") {
-          map.setLayoutProperty(
-            "grid_layer",
-            "visibility",
-            loadFeatures ? "visible" : "none"
-          );
-        }
-      }
     </script>
-  </body>
+</body>
 </html>
