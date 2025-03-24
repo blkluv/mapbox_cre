@@ -3,133 +3,76 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Weed Deals Dice Game</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #f0f8ff;
-        }
-        #map { height: 500px; margin: 20px auto; width: 90%; }
-        .dice-button {
-            padding: 10px 20px;
-            font-size: 18px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-bottom: 20px;
-        }
-        .dice-button:hover {
-            background-color: #45a049;
-        }
-        .deal-message {
-            font-size: 24px;
-            font-weight: bold;
-            color: #007bff;
-        }
-        .emoji {
-            font-size: 50px;
-        }
-    </style>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+    <script src="https://cdn.what3words.com/javascript-components@4-latest/dist/what3words/what3words.js?key=YOUR_W3W_API_KEY"></script>
+    <title>Atlantic City Dispensary Map</title>
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        .marker { background-size: cover; width: 40px; height: 40px; cursor: pointer; }
+        .mapboxgl-popup { max-width: 300px; font: 14px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif; }
+        .mapboxgl-popup-content { text-align: center; }
+        .mapboxgl-popup-content a { color: #007bff; text-decoration: none; }
+        .mapboxgl-popup-content a:hover { text-decoration: underline; }
+    </style>
 </head>
 <body>
-    <h1>🎲 Roll the Dice to Find Weed Deals! 🎉</h1>
-    <button class="dice-button" onclick="rollDice()">Roll the Dice 🎲</button>
-    <div class="deal-message" id="dealMessage"></div>
     <div id="map"></div>
 
-    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-    <script src="https://cdn.what3words.com/javascript-components@4-latest/dist/what3words/what3words.js?key=29IK5VZP"></script>
-
     <script>
-        mapboxgl.accessToken = "your_mapbox_token"; // Replace with your own Mapbox token
-        let map = new mapboxgl.Map({
+        // Mapbox setup
+        mapboxgl.accessToken = "YOUR_MAPBOX_ACCESS_TOKEN";
+        const map = new mapboxgl.Map({
             container: "map",
-            style: "mapbox://styles/mapbox/streets-v11", // Default style for simplicity
+            style: "mapbox://styles/mapbox/streets-v11",
             center: [-74.4277, 39.3643], // Atlantic City coordinates
             zoom: 13
         });
+        map.addControl(new mapboxgl.NavigationControl());
 
-        // Dispensary Data with clickable links
+        // Dispensary data
         const dispensaries = [
             {
                 name: "Dispensary A",
                 location: [-74.4300, 39.3680],
-                image: "dispensary_a.jpg",
-                info: "Best deals on edibles & flowers! 🛒 <a href='https://yourshoplink.com' target='_blank'>Shop Now</a> | 🎥 <a href='https://pinata.video/yourvideo' target='_blank'>Watch Video</a>"
+                emoji: "🍁", // Cannabis leaf emoji
+                videoLink: "https://www.youtube.com/watch?v=example1", // Piñata video link
+                shopLink: "https://example.com/shop-now-a", // Shop Now link
+                saleText: "Get 20% off all edibles this week! Don't miss out!"
             },
             {
                 name: "Dispensary B",
                 location: [-74.4250, 39.3620],
-                image: "dispensary_b.jpg",
-                info: "Premium organic strains available. 🛒 <a href='https://yourshoplink.com' target='_blank'>Shop Now</a> | 🎥 <a href='https://pinata.video/yourvideo' target='_blank'>Watch Video</a>"
+                emoji: "🌿", // Herb emoji
+                videoLink: "https://www.youtube.com/watch?v=example2", // Piñata video link
+                shopLink: "https://example.com/shop-now-b", // Shop Now link
+                saleText: "Buy one, get one free on all vapes! Limited time only!"
             },
+            // Add more dispensaries as needed
         ];
 
-        function rollDice() {
-            // Randomly choose a number between 1 and 6
-            const roll = Math.floor(Math.random() * 6);
-            const chosenDispensary = dispensaries[roll];
-            const emoji = chosenDispensary.emoji;
-            const location = chosenDispensary.location;
-            const message = `You rolled a ${emoji}! Visit this spot: ${location}`;
-
-            // Show the deal message with the emoji and location
-            document.getElementById("dealMessage").textContent = message;
-
-            // Update the map with the location of the dispensary
-            updateMapLocation(location);
-        }
-
-        function updateMapLocation(w3wLocation) {
-            // Fetch the coordinates for the given What3Words address
-            what3words.api.convertToCoordinates(w3wLocation)
-                .then(function (data) {
-                    const coords = data.coordinates;
-                    // Set the map's center to the coordinates of the dispensary
-                    map.flyTo({
-                        center: [coords.lng, coords.lat],
-                        zoom: 15
-                    });
-                    new mapboxgl.Marker()
-                        .setLngLat([coords.lng, coords.lat])
-                        .setPopup(new mapboxgl.Popup({ offset: 25 })
-                            .setHTML(`
-                                <h3>${chosenDispensary.name}</h3>
-                                <img src="${chosenDispensary.image}" alt="${chosenDispensary.name}" style="width: 100%; height: auto;">
-                                <p>${chosenDispensary.info}</p>
-                            `))
-                        .addTo(map);
-                })
-                .catch(console.error);
-        }
-
-        // Adding clickable emoji markers to the map for all dispensaries
+        // Add markers for each dispensary
         dispensaries.forEach(dispensary => {
-            const emojiMarker = document.createElement('div');
-            emojiMarker.className = 'emoji-marker';
-            emojiMarker.style.fontSize = '50px';
-            emojiMarker.innerHTML = dispensary.emoji;
+            const marker = document.createElement("div");
+            marker.className = "marker";
+            marker.textContent = dispensary.emoji; // Use emoji as the marker
+            marker.style.fontSize = "30px"; // Adjust emoji size
 
-            const marker = new mapboxgl.Marker(emojiMarker)
-                .setLngLat([0, 0]) // Set coordinates here (replace with actual coordinates from What3Words)
-                .setPopup(new mapboxgl.Popup({ offset: 25 })
-                    .setHTML(`
-                        <h3>${dispensary.name}</h3>
-                        <img src="${dispensary.image}" alt="${dispensary.name}" style="width: 100%; height: auto;">
-                        <p>${dispensary.info}</p>
-                    `))
+            // Create a popup
+            const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+                <h3>${dispensary.name}</h3>
+                <p>${dispensary.saleText}</p>
+                <a href="${dispensary.videoLink}" target="_blank">Watch the Piñata Video!</a><br><br>
+                <a href="${dispensary.shopLink}" target="_blank" style="background: #007bff; color: white; padding: 8px 12px; border-radius: 5px; text-decoration: none;">Shop Now</a>
+            `);
+
+            // Add marker to the map
+            new mapboxgl.Marker(marker)
+                .setLngLat(dispensary.location)
+                .setPopup(popup)
                 .addTo(map);
-
-            what3words.api.convertToCoordinates(dispensary.location)
-                .then(function (data) {
-                    const coords = data.coordinates;
-                    marker.setLngLat([coords.lng, coords.lat]);
-                })
-                .catch(console.error);
         });
     </script>
 </body>
