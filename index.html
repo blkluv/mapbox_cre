@@ -11,10 +11,22 @@
     />
     <script src="https://cdn.what3words.com/javascript-components@4-latest/dist/what3words/what3words.js?key=29IK5VZP"></script>
     <title>Grid Section Map Overlay (Mapbox)</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+    </style>
   </head>
   <body>
-    body {margin: 0;padding: 0;}
-    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    <div id="map"></div> <!-- Added this div to contain the map -->
+
     <script>
       // Create the Mapbox
       mapboxgl.accessToken =
@@ -26,22 +38,18 @@
         zoom: 18 // starting zoom
       });
       map.addControl(new mapboxgl.NavigationControl());
-    </script>
-    <script>
+
       // On map load and move events, invoke the drawGrid function
       map.on("load", drawGrid).on("move", drawGrid);
 
-      // Check to see if the requisit zoom level has been reached, and if so, draw the grid onto the map
       function drawGrid() {
         const zoom = map.getZoom();
         const loadFeatures = zoom > 11;
 
         if (loadFeatures) {
-          // Zoom level is high enough
           var ne = map.getBounds().getNorthEast();
           var sw = map.getBounds().getSouthWest();
 
-          // Call the what3words Grid API to obtain the grid squares within the current visble bounding box
           what3words.api
             .gridSectionGeoJson({
               southwest: {
