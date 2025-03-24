@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Weed Deals Dice Game</title>
+    <title>WEEDW3W Sales Dice Game</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -42,10 +42,10 @@
     <div id="map"></div>
 
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-    <script src="https://cdn.what3words.com/javascript-components@4-latest/dist/what3words/what3words.js?key=29IK5VZP"></script>
+    <script src="https://cdn.what3words.com/javascript-components@4-latest/dist/what3words/what3words.js?key=KMKC2LHW"></script>
 
     <script>
-        mapboxgl.accessToken = "your_mapbox_token"; // Replace with your own Mapbox token
+        mapboxgl.accessToken = "pk.eyJ1IjoiYmxrbHV2IiwiYSI6ImNscTQ1M25xYTAzaWIyaWxrY3V2N3Q1N3oifQ.2EBlTUdWQdnxZLvVYdntqQ"; // Replace with your own Mapbox token
         let map = new mapboxgl.Map({
             container: "map",
             style: "mapbox://styles/mapbox/streets-v11", // Default style for simplicity
@@ -196,7 +196,7 @@
             emojiMarker.innerHTML = dispensary.emoji;
 
             const marker = new mapboxgl.Marker(emojiMarker)
-                .setLngLat([0, 0]) // Set coordinates here (replace with actual coordinates from What3Words)
+                .setLngLat([39.354261,-74.448344]) // Set coordinates here (replace with actual coordinates from What3Words)
                 .setPopup(new mapboxgl.Popup({ offset: 25 })
                     .setHTML(`
                         <h3>${dispensary.name}</h3>
