@@ -174,7 +174,7 @@
         locations.forEach(location => {
             const marker = document.createElement("div");
             marker.className = "marker";
-            marker.style.backgroundImage = "url(https://i.imgur.com/1p4UECG.png)";
+            marker.style.backgroundImage = "url(https://i.imgur.com/HZbull4.png)";
 
             new mapboxgl.Marker(marker)
                 .setLngLat(location.location)
@@ -183,7 +183,7 @@
                     <h3>${location.name}</h3>
                     <p>${location.info}</p>
                     <a href="${location.website}" target="_blank" style="color: #00ffea;">🌐 Visit Website</a><br>
-                    <a href="${location.video}" target="_blank" style="color: #ff00ff;">📹 Watch Video</a>
+                    <a href="${location.video}" target="_blank" style="color: #ff00ff;">📹 Watch Reel</a>
                 `))
                 .addTo(map);
         });
