@@ -121,71 +121,69 @@
         let map = new mapboxgl.Map({
             container: "map",
             style: "mapbox://styles/mapbox/dark-v11",
-            center: [-84.3989, 33.7917], //
+            center: [-84.3989, 33.7917],
             zoom: 13
         });
 
         map.addControl(new mapboxgl.NavigationControl());
 
-        const dispensaries = [
-// Add this to your existing JavaScript data or create a new locations array
-const featuredLocations = [
-    {
-        name: "Magic City Kitchen",
-        location: [-84.3923, 33.7490], // Atlanta coordinates
-        image: "https://i.imgur.com/MAGICCITYIMAGE.png", // Replace with actual image URL
-        info: 'Visit <a href="https://what3words.com/famous.kitchen.magic" target="_blank" style="color: #00ffea;">///famous.kitchen.magic</a> for 15% OFF with code ATL5D',
-        website: "https://magiccitykitchen.com",
-        video: "https://www.youtube.com/shorts/ABf96TPBuqs"
-    },
-    {
-        name: "HEAT Personal Training",
-        location: [-84.3856, 33.7749], // Atlanta coordinates
-        image: "https://i.imgur.com/HEATPTIMAGE.png", // Replace with actual image URL
-        info: 'Train at <a href="https://what3words.com/burn.sweat.heat" target="_blank" style="color: #00ffea;">///burn.sweat.heat</a> - First session FREE with code ATL5D',
-        website: "https://heatpersonaltraining.com",
-        video: "https://www.youtube.com/shorts/t84JpJ6iglo"
-    },
-    {
-        name: "MARTA Five Points Station",
-        location: [-84.3915, 33.7541], // Exact MARTA coordinates
-        image: "https://i.imgur.com/MARTAIMAGE.png", // Replace with actual image URL
-        info: 'Central hub at <a href="https://what3words.com/connect.transit.city" target="_blank" style="color: #00ffea;">///connect.transit.city</a> - Show ATL5D badge for express lane',
-        website: "https://itsmarta.com",
-        video: "https://www.youtube.com/shorts/HgY3myHKcQ4"
-    },
-    {
-        name: "Ariskbiu Ice Cream",
-        location: [-84.3782, 33.7489], // Atlanta coordinates
-        image: "https://i.imgur.com/ARISKBIIUIMAGE.png", // Replace with actual image URL
-        info: 'Black-owned delight at <a href="https://what3words.com/sweet.cream.black" target="_blank" style="color: #00ffea;">///sweet.cream.black</a> - BOGO with code ATL5D',
-        website: "https://ariskbiucream.com",
-        video: "https://www.youtube.com/embed/ARISKBIIUVIDEOID"
-    },
-    {
-        name: "High Rollers Atlantic City Dispensary",
-        location: [-74.432096, 39.35798], 
-        image: "https://i.imgur.com/RjWVKhN.png",
-        info: 'Visit <a href="https://what3words.com/film.client.darker" target="_blank" style="color: #00ffea;">///film.client.darker</a> for 50% OFF with WEEDW3W1',
-        website: "https://highrollersac.com",
-        video: "https://gateway.pinata.cloud/ipfs/QmYourVideoHash"
-    }
-];
+        const locations = [
+            {
+                name: "Magic City Kitchen",
+                location: [-84.3923, 33.7490],
+                image: "https://i.imgur.com/MAGICCITYIMAGE.png",
+                info: 'Visit <a href="https://what3words.com/famous.kitchen.magic" target="_blank" style="color: #00ffea;">///famous.kitchen.magic</a> for 15% OFF with code ATL5D',
+                website: "https://magiccitykitchen.com",
+                video: "https://www.youtube.com/shorts/ABf96TPBuqs"
+            },
+            {
+                name: "HEAT Personal Training",
+                location: [-84.3856, 33.7749],
+                image: "https://i.imgur.com/HEATPTIMAGE.png",
+                info: 'Train at <a href="https://what3words.com/burn.sweat.heat" target="_blank" style="color: #00ffea;">///burn.sweat.heat</a> - First session FREE with code ATL5D',
+                website: "https://heatpersonaltraining.com",
+                video: "https://www.youtube.com/shorts/t84JpJ6iglo"
+            },
+            {
+                name: "MARTA Five Points Station",
+                location: [-84.3915, 33.7541],
+                image: "https://i.imgur.com/MARTAIMAGE.png",
+                info: 'Central hub at <a href="https://what3words.com/connect.transit.city" target="_blank" style="color: #00ffea;">///connect.transit.city</a> - Show ATL5D badge for express lane',
+                website: "https://itsmarta.com",
+                video: "https://www.youtube.com/shorts/HgY3myHKcQ4"
+            },
+            {
+                name: "Ariskbiu Ice Cream",
+                location: [-84.3782, 33.7489],
+                image: "https://i.imgur.com/ARISKBIIUIMAGE.png",
+                info: 'Black-owned delight at <a href="https://what3words.com/sweet.cream.black" target="_blank" style="color: #00ffea;">///sweet.cream.black</a> - BOGO with code ATL5D',
+                website: "https://ariskbiucream.com",
+                video: "https://www.youtube.com/embed/ARISKBIIUVIDEOID"
+            },
+            {
+                name: "High Rollers Atlantic City Dispensary",
+                location: [-74.432096, 39.35798], 
+                image: "https://i.imgur.com/RjWVKhN.png",
+                info: 'Visit <a href="https://what3words.com/film.client.darker" target="_blank" style="color: #00ffea;">///film.client.darker</a> for 50% OFF with WEEDW3W1',
+                website: "https://highrollersac.com",
+                video: "https://gateway.pinata.cloud/ipfs/QmYourVideoHash"
+            }
+        ];
 
         // Add Neon Markers
-        dispensaries.forEach(dispensary => {
+        locations.forEach(location => {
             const marker = document.createElement("div");
             marker.className = "marker";
             marker.style.backgroundImage = "url(https://i.imgur.com/1p4UECG.png)";
 
             new mapboxgl.Marker(marker)
-                .setLngLat(dispensary.location)
+                .setLngLat(location.location)
                 .setPopup(new mapboxgl.Popup().setHTML(`
-                    <img src="${dispensary.image}" />
-                    <h3>${dispensary.name}</h3>
-                    <p>${dispensary.info}</p>
-                    <a href="${dispensary.website}" target="_blank" style="color: #00ffea;">🌐 Visit Website</a><br>
-                    <a href="${dispensary.video}" target="_blank" style="color: #ff00ff;">📹 Watch Video</a>
+                    <img src="${location.image}" />
+                    <h3>${location.name}</h3>
+                    <p>${location.info}</p>
+                    <a href="${location.website}" target="_blank" style="color: #00ffea;">🌐 Visit Website</a><br>
+                    <a href="${location.video}" target="_blank" style="color: #ff00ff;">📹 Watch Video</a>
                 `))
                 .addTo(map);
         });
