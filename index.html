@@ -76,9 +76,18 @@
             animation: pulse 1.5s infinite alternate;
         }
 
+        .marker.atlantic {
+            box-shadow: 0px 0px 10px #ff4444;
+        }
+
         @keyframes pulse {
             0%   { box-shadow: 0px 0px 5px #00ffea; }
             100% { box-shadow: 0px 0px 15px #00ffea; }
+        }
+
+        .marker.atlantic.pulse {
+            0%   { box-shadow: 0px 0px 5px #ff4444; }
+            100% { box-shadow: 0px 0px 15px #ff4444; }
         }
 
         /* Popup Styling */
@@ -96,6 +105,33 @@
             object-fit: cover;
             border-radius: 8px;
         }
+
+        /* Location Filter */
+        #filter-container {
+            position: absolute;
+            top: 55px;
+            right: 10px;
+            z-index: 1000;
+            background: #222;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        #filter-container button {
+            background: #00ffea;
+            color: #000;
+            border: none;
+            padding: 8px 12px;
+            margin: 2px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        #filter-container button:hover {
+            background: #ff00ff;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -105,12 +141,19 @@
         <a href="http://map.atl5d.com">🗺️ MAP.</a>
         <a href="http://pic.atl5d.com">🖼️ PIC.</a>
         <a href="http://tiktok.com/@atl5d">🤳 TIKTOK</a>
+        <a href="#" onclick="showAllLocations()">🌍 SHOW ALL</a>
         <a href="#" onclick="rollDice()">🎲 ROLL DICE</a>
     </div>
 
     <!-- What3Words Search -->
     <div id="search-container">
         <input id="w3w-input" type="text" placeholder="Enter What3Words (e.g. apple.banana.orange)" onkeypress="searchW3W(event)">
+    </div>
+
+    <!-- Location Filter -->
+    <div id="filter-container">
+        <button onclick="showAtlanta()">📍 ATLANTA</button>
+        <button onclick="showAtlanticCity()">🎰 ATLANTIC CITY</button>
     </div>
 
     <div id="map"></div>
@@ -121,8 +164,8 @@
         let map = new mapboxgl.Map({
             container: "map",
             style: "mapbox://styles/mapbox/dark-v11",
-            center: [-84.3989, 33.7917],
-            zoom: 13
+            center: [-79.5, 36.5], // Centered between both cities
+            zoom: 5 // Zoomed out to show both locations
         });
 
         map.addControl(new mapboxgl.NavigationControl());
@@ -134,7 +177,8 @@
                 image: "https://i.imgur.com/fvjCvlx.jpeg",
                 info: 'Visit <a href="https://what3words.com/famous.kitchen.magic" target="_blank" style="color: #00ffea;">///famous.kitchen.magic</a> for 15% OFF with code ATL5D',
                 website: "https://magiccitykitchen.com",
-                video: "https://www.youtube.com/shorts/ABf96TPBuqs"
+                video: "https://www.youtube.com/shorts/ABf96TPBuqs",
+                city: "atlanta"
             },
             {
                 name: "HEAT Personal Training",
@@ -142,7 +186,8 @@
                 image: "https://i.imgur.com/WnZE6Vb.jpeg",
                 info: 'Train at <a href="https://what3words.com/burn.sweat.heat" target="_blank" style="color: #00ffea;">///burn.sweat.heat</a> - First session FREE with code ATL5D',
                 website: "https://heatpersonaltraining.com",
-                video: "https://www.youtube.com/shorts/t84JpJ6iglo"
+                video: "https://www.youtube.com/shorts/t84JpJ6iglo",
+                city: "atlanta"
             },
             {
                 name: "MARTA Five Points Station",
@@ -150,7 +195,8 @@
                 image: "https://i.imgur.com/5qlQfGA.png",
                 info: 'Central hub at <a href="https://what3words.com/connect.transit.city" target="_blank" style="color: #00ffea;">///connect.transit.city</a> - Show ATL5D badge for express lane',
                 website: "https://itsmarta.com",
-                video: "https://www.youtube.com/shorts/HgY3myHKcQ4"
+                video: "https://www.youtube.com/shorts/HgY3myHKcQ4",
+                city: "atlanta"
             },
             {
                 name: "Ariskbiu Ice Cream",
@@ -158,7 +204,8 @@
                 image: "https://i.imgur.com/ARISKBIIUIMAGE.png",
                 info: 'Black-owned delight at <a href="https://what3words.com/sweet.cream.black" target="_blank" style="color: #00ffea;">///sweet.cream.black</a> - BOGO with code ATL5D',
                 website: "https://ariskbiucream.com",
-                video: "https://www.youtube.com/embed/ARISKBIIUVIDEOID"
+                video: "https://www.youtube.com/embed/ARISKBIIUVIDEOID",
+                city: "atlanta"
             },
             {
                 name: "High Rollers Atlantic City Dispensary",
@@ -166,27 +213,120 @@
                 image: "https://i.imgur.com/RjWVKhN.png",
                 info: 'Visit <a href="https://what3words.com/film.client.darker" target="_blank" style="color: #00ffea;">///film.client.darker</a> for 50% OFF with WEEDW3W1',
                 website: "https://highrollersac.com",
-                video: "https://gateway.pinata.cloud/ipfs/QmYourVideoHash"
+                video: "https://gateway.pinata.cloud/ipfs/QmYourVideoHash",
+                city: "atlantic"
             }
         ];
 
-        // Add Neon Markers
-        locations.forEach(location => {
-            const marker = document.createElement("div");
-            marker.className = "marker";
-            marker.style.backgroundImage = "url(https://i.imgur.com/HZbull4.png)";
+        let markers = [];
 
-            new mapboxgl.Marker(marker)
-                .setLngLat(location.location)
-                .setPopup(new mapboxgl.Popup().setHTML(`
-                    <img src="${location.image}" />
-                    <h3>${location.name}</h3>
-                    <p>${location.info}</p>
-                    <a href="${location.website}" target="_blank" style="color: #00ffea;">🌐 Visit Website</a><br>
-                    <a href="${location.video}" target="_blank" style="color: #ff00ff;">📹 Watch Reel</a>
-                `))
-                .addTo(map);
-        });
+        // Add All Markers
+        function addAllMarkers() {
+            // Clear existing markers
+            markers.forEach(marker => marker.remove());
+            markers = [];
+
+            locations.forEach(location => {
+                const marker = document.createElement("div");
+                marker.className = "marker";
+                if (location.city === "atlantic") {
+                    marker.classList.add("atlantic");
+                }
+                marker.style.backgroundImage = "url(https://i.imgur.com/HZbull4.png)";
+
+                const mapMarker = new mapboxgl.Marker(marker)
+                    .setLngLat(location.location)
+                    .setPopup(new mapboxgl.Popup().setHTML(`
+                        <img src="${location.image}" />
+                        <h3>${location.name}</h3>
+                        <p>${location.info}</p>
+                        <a href="${location.website}" target="_blank" style="color: #00ffea;">🌐 Visit Website</a><br>
+                        <a href="${location.video}" target="_blank" style="color: #ff00ff;">📹 Watch Reel</a>
+                    `))
+                    .addTo(map);
+
+                markers.push(mapMarker);
+            });
+        }
+
+        // Show All Locations
+        function showAllLocations() {
+            addAllMarkers();
+            map.flyTo({
+                center: [-79.5, 36.5],
+                zoom: 5,
+                essential: true
+            });
+        }
+
+        // Show Only Atlanta
+        function showAtlanta() {
+            // Clear existing markers
+            markers.forEach(marker => marker.remove());
+            markers = [];
+
+            // Add only Atlanta markers
+            locations.filter(loc => loc.city === "atlanta").forEach(location => {
+                const marker = document.createElement("div");
+                marker.className = "marker";
+                marker.style.backgroundImage = "url(https://i.imgur.com/HZbull4.png)";
+
+                const mapMarker = new mapboxgl.Marker(marker)
+                    .setLngLat(location.location)
+                    .setPopup(new mapboxgl.Popup().setHTML(`
+                        <img src="${location.image}" />
+                        <h3>${location.name}</h3>
+                        <p>${location.info}</p>
+                        <a href="${location.website}" target="_blank" style="color: #00ffea;">🌐 Visit Website</a><br>
+                        <a href="${location.video}" target="_blank" style="color: #ff00ff;">📹 Watch Reel</a>
+                    `))
+                    .addTo(map);
+
+                markers.push(mapMarker);
+            });
+
+            map.flyTo({
+                center: [-84.3989, 33.7917],
+                zoom: 13,
+                essential: true
+            });
+        }
+
+        // Show Only Atlantic City
+        function showAtlanticCity() {
+            // Clear existing markers
+            markers.forEach(marker => marker.remove());
+            markers = [];
+
+            // Add only Atlantic City markers
+            locations.filter(loc => loc.city === "atlantic").forEach(location => {
+                const marker = document.createElement("div");
+                marker.className = "marker atlantic";
+                marker.style.backgroundImage = "url(https://i.imgur.com/HZbull4.png)";
+
+                const mapMarker = new mapboxgl.Marker(marker)
+                    .setLngLat(location.location)
+                    .setPopup(new mapboxgl.Popup().setHTML(`
+                        <img src="${location.image}" />
+                        <h3>${location.name}</h3>
+                        <p>${location.info}</p>
+                        <a href="${location.website}" target="_blank" style="color: #00ffea;">🌐 Visit Website</a><br>
+                        <a href="${location.video}" target="_blank" style="color: #ff00ff;">📹 Watch Reel</a>
+                    `))
+                    .addTo(map);
+
+                markers.push(mapMarker);
+            });
+
+            map.flyTo({
+                center: [-74.432096, 39.35798],
+                zoom: 15,
+                essential: true
+            });
+        }
+
+        // Initialize with all markers
+        addAllMarkers();
 
         // Search What3Words Address
         function searchW3W(event) {
@@ -198,6 +338,20 @@
                             if (response && response.coordinates) {
                                 let { lat, lng } = response.coordinates;
                                 map.flyTo({ center: [lng, lat], zoom: 15 });
+                                
+                                // Add a temporary marker at the searched location
+                                const marker = document.createElement("div");
+                                marker.className = "marker";
+                                marker.style.backgroundImage = "url(https://i.imgur.com/HZbull4.png)";
+                                marker.style.boxShadow = "0px 0px 15px #ffff00";
+                                
+                                new mapboxgl.Marker(marker)
+                                    .setLngLat([lng, lat])
+                                    .setPopup(new mapboxgl.Popup().setHTML(`
+                                        <h3>Searched Location</h3>
+                                        <p>///${words}</p>
+                                    `))
+                                    .addTo(map);
                             } else {
                                 alert("Invalid What3Words address.");
                             }
