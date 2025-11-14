@@ -173,6 +173,20 @@
             color: #fff;
         }
 
+        /* Loading and Status */
+        .status-message {
+            position: absolute;
+            top: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #00ffea;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+            display: none;
+        }
+
         /* Mobile Responsive */
         @media (max-width: 768px) {
             #header {
@@ -206,20 +220,23 @@
     <!-- Game Header -->
     <div id="header">
         <a href="http://map.atl5d.com">🗺️ MAP.</a>
-        <a href="http://tv.tokenopoly.app">❤️‍🔥 TV</a>
-        <a href="http://tiktok.com/@tokenopoly">🤳 TIKTOK</a>
+        <a href="http://pic.atl5d.com">❤️‍🔥 TV.</a>
+        <a href="http://tiktok.com/@atl5d">🤳 TIKTOK</a>
     </div>
 
     <!-- Search Container -->
     <div id="search-container">
         <input id="address-input" type="text" class="search-input" placeholder="Enter street address (e.g. 123 Main St, Atlanta, GA)" onkeypress="searchAddress(event)" style="display: none;">
-        <input id="w3w-input" type="text" class="search-input" placeholder="Enter What3Words (e.g. apple.banana.orange)" onkeypress="searchW3W(event)">
+        <input id="w3w-input" type="text" class="search-input" placeholder="Enter What3Words (e.g. filled.count.soap)" onkeypress="searchW3W(event)">
         
         <div class="search-type">
             <button id="btn-address" onclick="setSearchType('address')">📍 Address</button>
             <button id="btn-w3w" onclick="setSearchType('w3w')" class="active">🔤 What3Words</button>
         </div>
     </div>
+
+    <!-- Status Message -->
+    <div id="status-message" class="status-message"></div>
 
     <!-- Location Filter -->
     <div id="filter-container">
@@ -243,7 +260,223 @@
         map.addControl(new mapboxgl.NavigationControl());
         let currentSearchType = 'w3w';
         let tempMarkers = [];
+        let what3wordsAPI;
 
+        // Initialize What3Words API
+        function initW3W() {
+            what3wordsAPI = what3words();
+            console.log("What3Words API initialized");
+        }
+
+        // Show status message
+        function showStatus(message, isError = false) {
+            const statusEl = document.getElementById('status-message');
+            statusEl.textContent = message;
+            statusEl.style.color = isError ? '#ff4444' : '#00ffea';
+            statusEl.style.display = 'block';
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 3000);
+        }
+
+        // Set search type
+        function setSearchType(type) {
+            currentSearchType = type;
+            document.getElementById('btn-address').classList.remove('active');
+            document.getElementById('btn-w3w').classList.remove('active');
+            
+            if (type === 'address') {
+                document.getElementById('btn-address').classList.add('active');
+                document.getElementById('address-input').style.display = 'block';
+                document.getElementById('w3w-input').style.display = 'none';
+                document.getElementById('address-input').focus();
+            } else {
+                document.getElementById('btn-w3w').classList.add('active');
+                document.getElementById('address-input').style.display = 'none';
+                document.getElementById('w3w-input').style.display = 'block';
+                document.getElementById('w3w-input').focus();
+            }
+        }
+
+        // Clear temporary markers
+        function clearTempMarkers() {
+            tempMarkers.forEach(marker => marker.remove());
+            tempMarkers = [];
+        }
+
+        // Search by address and convert to What3Words
+        function searchAddress(event) {
+            if (event.key === "Enter") {
+                let address = document.getElementById("address-input").value.trim();
+                if (address) {
+                    clearTempMarkers();
+                    showStatus("Searching for address...");
+                    
+                    // Use Mapbox Geocoding to convert address to coordinates
+                    fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxgl.accessToken}&limit=1`)
+                        .then(response => {
+                            if (!response.ok) throw new Error('Network response was not ok');
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.features && data.features.length > 0) {
+                                const [lng, lat] = data.features[0].center;
+                                const placeName = data.features[0].place_name;
+                                
+                                // Fly to the location
+                                map.flyTo({ center: [lng, lat], zoom: 15 });
+                                
+                                showStatus("Converting to What3Words...");
+                                
+                                // Convert coordinates to What3Words using direct API call
+                                fetch(`https://api.what3words.com/v3/convert-to-3wa?coordinates=${lat},${lng}&key=3UJB7WTL`)
+                                    .then(response => {
+                                        if (!response.ok) throw new Error('W3W API response was not ok');
+                                        return response.json();
+                                    })
+                                    .then(w3wResponse => {
+                                        if (w3wResponse && w3wResponse.words) {
+                                            const w3w = w3wResponse.words;
+                                            
+                                            // Add marker with both address and W3W info
+                                            const marker = document.createElement("div");
+                                            marker.className = "marker";
+                                            marker.style.backgroundImage = "url(https://i.imgur.com/HZbull4.png)";
+                                            marker.style.boxShadow = "0px 0px 15px #ffff00";
+                                            
+                                            const tempMarker = new mapboxgl.Marker(marker)
+                                                .setLngLat([lng, lat])
+                                                .setPopup(new mapboxgl.Popup().setHTML(`
+                                                    <h3>📍 ${placeName}</h3>
+                                                    <p><strong>What3Words:</strong> ///${w3w}</p>
+                                                    <p><em>Address found and converted to W3W</em></p>
+                                                    <a href="https://what3words.com/${w3w}" target="_blank" style="color: #00ffea;">Open in What3Words</a>
+                                                `))
+                                                .addTo(map);
+                                            
+                                            tempMarkers.push(tempMarker);
+                                            
+                                            // Update search field to show the W3W
+                                            document.getElementById("w3w-input").value = w3w;
+                                            showStatus("Address converted to What3Words!");
+                                            
+                                        } else {
+                                            throw new Error('No W3W response');
+                                        }
+                                    })
+                                    .catch(w3wError => {
+                                        console.error("W3W conversion error:", w3wError);
+                                        showStatus("Found address but couldn't convert to What3Words", true);
+                                    });
+                                
+                            } else {
+                                showStatus("Address not found. Please try a more specific address.", true);
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Geocoding error:", error);
+                            showStatus("Error searching for address. Please check your connection.", true);
+                        });
+                }
+            }
+        }
+
+        // Search by What3Words and convert to address
+        function searchW3W(event) {
+            if (event.key === "Enter") {
+                let words = document.getElementById("w3w-input").value.trim().toLowerCase();
+                if (words) {
+                    clearTempMarkers();
+                    showStatus("Searching for What3Words location...");
+                    
+                    // Enhanced validation for what3words format
+                    const w3wRegex = /^[a-z]+\.[a-z]+\.[a-z]+$/;
+                    if (!w3wRegex.test(words)) {
+                        showStatus("Please enter valid What3Words format: word.word.word", true);
+                        return;
+                    }
+                    
+                    // Use direct What3Words API call
+                    fetch(`https://api.what3words.com/v3/convert-to-coordinates?words=${words}&key=3UJB7WTL`)
+                        .then(response => {
+                            if (!response.ok) throw new Error('W3W API response was not ok');
+                            return response.json();
+                        })
+                        .then(response => {
+                            if (response && response.coordinates) {
+                                const { lat, lng } = response.coordinates;
+                                
+                                // Fly to the location
+                                map.flyTo({ center: [lng, lat], zoom: 15 });
+                                
+                                showStatus("Converting to address...");
+                                
+                                // Convert coordinates back to address using Mapbox reverse geocoding
+                                fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}&types=address,place`)
+                                    .then(geoResponse => geoResponse.json())
+                                    .then(geoData => {
+                                        let address = "Address not found";
+                                        if (geoData.features && geoData.features.length > 0) {
+                                            address = geoData.features[0].place_name;
+                                        }
+                                        
+                                        // Add marker with both W3W and address info
+                                        const marker = document.createElement("div");
+                                        marker.className = "marker";
+                                        marker.style.backgroundImage = "url(https://i.imgur.com/HZbull4.png)";
+                                        marker.style.boxShadow = "0px 0px 15px #ffff00";
+                                        
+                                        const tempMarker = new mapboxgl.Marker(marker)
+                                            .setLngLat([lng, lat])
+                                            .setPopup(new mapboxgl.Popup().setHTML(`
+                                                <h3>🔤 ///${words}</h3>
+                                                <p><strong>Address:</strong> ${address}</p>
+                                                <p><em>What3Words converted to address</em></p>
+                                                <a href="https://what3words.com/${words}" target="_blank" style="color: #00ffea;">Open in What3Words</a>
+                                            `))
+                                            .addTo(map);
+                                        
+                                        tempMarkers.push(tempMarker);
+                                        
+                                        // Update address field if visible
+                                        document.getElementById("address-input").value = address;
+                                        showStatus("What3Words converted to address!");
+                                        
+                                    })
+                                    .catch(geoError => {
+                                        console.error("Reverse geocoding error:", geoError);
+                                        // Still add marker even if reverse geocoding fails
+                                        const marker = document.createElement("div");
+                                        marker.className = "marker";
+                                        marker.style.backgroundImage = "url(https://i.imgur.com/HZbull4.png)";
+                                        marker.style.boxShadow = "0px 0px 15px #ffff00";
+                                        
+                                        const tempMarker = new mapboxgl.Marker(marker)
+                                            .setLngLat([lng, lat])
+                                            .setPopup(new mapboxgl.Popup().setHTML(`
+                                                <h3>🔤 ///${words}</h3>
+                                                <p><em>What3Words location found</em></p>
+                                                <a href="https://what3words.com/${words}" target="_blank" style="color: #00ffea;">Open in What3Words</a>
+                                            `))
+                                            .addTo(map);
+                                        
+                                        tempMarkers.push(tempMarker);
+                                        showStatus("Location found but address conversion failed", true);
+                                    });
+                                
+                            } else {
+                                showStatus("Invalid What3Words address. Please check spelling.", true);
+                            }
+                        })
+                        .catch(error => {
+                            console.error("What3Words error:", error);
+                            showStatus("Error: Unable to find this What3Words location.", true);
+                        });
+                }
+            }
+        }
+
+        // Rest of your existing code for markers and locations...
         const locations = [
             {
                 name: "Magic City Kitchen",
@@ -293,181 +526,6 @@
         ];
 
         let markers = [];
-
-        // Set search type
-        function setSearchType(type) {
-            currentSearchType = type;
-            document.getElementById('btn-address').classList.remove('active');
-            document.getElementById('btn-w3w').classList.remove('active');
-            
-            if (type === 'address') {
-                document.getElementById('btn-address').classList.add('active');
-                document.getElementById('address-input').style.display = 'block';
-                document.getElementById('w3w-input').style.display = 'none';
-                document.getElementById('address-input').focus();
-            } else {
-                document.getElementById('btn-w3w').classList.add('active');
-                document.getElementById('address-input').style.display = 'none';
-                document.getElementById('w3w-input').style.display = 'block';
-                document.getElementById('w3w-input').focus();
-            }
-        }
-
-        // Clear temporary markers
-        function clearTempMarkers() {
-            tempMarkers.forEach(marker => marker.remove());
-            tempMarkers = [];
-        }
-
-        // Search by address and convert to What3Words
-        function searchAddress(event) {
-            if (event.key === "Enter") {
-                let address = document.getElementById("address-input").value.trim();
-                if (address) {
-                    clearTempMarkers();
-                    
-                    // Use Mapbox Geocoding to convert address to coordinates
-                    fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxgl.accessToken}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.features && data.features.length > 0) {
-                                const [lng, lat] = data.features[0].center;
-                                const placeName = data.features[0].place_name;
-                                
-                                // Fly to the location
-                                map.flyTo({ center: [lng, lat], zoom: 15 });
-                                
-                                // Convert coordinates to What3Words
-                                what3words.api.convertTo3wa({ coordinates: { lat, lng } })
-                                    .then(w3wResponse => {
-                                        if (w3wResponse && w3wResponse.words) {
-                                            const w3w = w3wResponse.words;
-                                            
-                                            // Add marker with both address and W3W info
-                                            const marker = document.createElement("div");
-                                            marker.className = "marker";
-                                            marker.style.backgroundImage = "url(https://i.imgur.com/HZbull4.png)";
-                                            marker.style.boxShadow = "0px 0px 15px #ffff00";
-                                            
-                                            const tempMarker = new mapboxgl.Marker(marker)
-                                                .setLngLat([lng, lat])
-                                                .setPopup(new mapboxgl.Popup().setHTML(`
-                                                    <h3>📍 ${placeName}</h3>
-                                                    <p><strong>What3Words:</strong> ///${w3w}</p>
-                                                    <p><em>Address found and converted to W3W</em></p>
-                                                    <a href="https://what3words.com/${w3w}" target="_blank" style="color: #00ffea;">Open in What3Words</a>
-                                                `))
-                                                .addTo(map);
-                                            
-                                            tempMarkers.push(tempMarker);
-                                            
-                                            // Update search field to show the W3W
-                                            document.getElementById("w3w-input").value = w3w;
-                                            
-                                        } else {
-                                            throw new Error('No W3W response');
-                                        }
-                                    })
-                                    .catch(w3wError => {
-                                        console.error("W3W conversion error:", w3wError);
-                                        alert("Found address but couldn't convert to What3Words. Please try again.");
-                                    });
-                                
-                            } else {
-                                alert("Address not found. Please try a more specific address.");
-                            }
-                        })
-                        .catch(error => {
-                            console.error("Geocoding error:", error);
-                            alert("Error searching for address. Please check your connection and try again.");
-                        });
-                }
-            }
-        }
-
-        // Search by What3Words and convert to address
-        function searchW3W(event) {
-            if (event.key === "Enter") {
-                let words = document.getElementById("w3w-input").value.trim();
-                if (words) {
-                    clearTempMarkers();
-                    
-                    // Basic validation for what3words format
-                    if (!words.match(/^[a-zA-Z]+\.[a-zA-Z]+\.[a-zA-Z]+$/)) {
-                        alert("Please enter a valid What3Words format: word.word.word");
-                        return;
-                    }
-                    
-                    what3words.api.convertToCoordinates({ words: words })
-                        .then(response => {
-                            if (response && response.coordinates) {
-                                let { lat, lng } = response.coordinates;
-                                
-                                // Fly to the location
-                                map.flyTo({ center: [lng, lat], zoom: 15 });
-                                
-                                // Convert coordinates back to address using Mapbox reverse geocoding
-                                fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}`)
-                                    .then(geoResponse => geoResponse.json())
-                                    .then(geoData => {
-                                        let address = "Address not found";
-                                        if (geoData.features && geoData.features.length > 0) {
-                                            address = geoData.features[0].place_name;
-                                        }
-                                        
-                                        // Add marker with both W3W and address info
-                                        const marker = document.createElement("div");
-                                        marker.className = "marker";
-                                        marker.style.backgroundImage = "url(https://i.imgur.com/HZbull4.png)";
-                                        marker.style.boxShadow = "0px 0px 15px #ffff00";
-                                        
-                                        const tempMarker = new mapboxgl.Marker(marker)
-                                            .setLngLat([lng, lat])
-                                            .setPopup(new mapboxgl.Popup().setHTML(`
-                                                <h3>🔤 ///${words}</h3>
-                                                <p><strong>Address:</strong> ${address}</p>
-                                                <p><em>What3Words converted to address</em></p>
-                                                <a href="https://what3words.com/${words}" target="_blank" style="color: #00ffea;">Open in What3Words</a>
-                                            `))
-                                            .addTo(map);
-                                        
-                                        tempMarkers.push(tempMarker);
-                                        
-                                        // Update address field if visible
-                                        document.getElementById("address-input").value = address;
-                                        
-                                    })
-                                    .catch(geoError => {
-                                        console.error("Reverse geocoding error:", geoError);
-                                        // Still add marker even if reverse geocoding fails
-                                        const marker = document.createElement("div");
-                                        marker.className = "marker";
-                                        marker.style.backgroundImage = "url(https://i.imgur.com/HZbull4.png)";
-                                        marker.style.boxShadow = "0px 0px 15px #ffff00";
-                                        
-                                        const tempMarker = new mapboxgl.Marker(marker)
-                                            .setLngLat([lng, lat])
-                                            .setPopup(new mapboxgl.Popup().setHTML(`
-                                                <h3>🔤 ///${words}</h3>
-                                                <p><em>What3Words location found</em></p>
-                                                <a href="https://what3words.com/${words}" target="_blank" style="color: #00ffea;">Open in What3Words</a>
-                                            `))
-                                            .addTo(map);
-                                        
-                                        tempMarkers.push(tempMarker);
-                                    });
-                                
-                            } else {
-                                alert("Invalid What3Words address. Please check the spelling.");
-                            }
-                        })
-                        .catch(error => {
-                            console.error("What3Words error:", error);
-                            alert("Error: Unable to find this What3Words location. Please check the spelling and try again.");
-                        });
-                }
-            }
-        }
 
         // Add All Markers
         function addAllMarkers() {
@@ -574,6 +632,11 @@
 
         // Set default search type
         setSearchType('w3w');
+
+        // Initialize What3Words when the script loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initW3W();
+        });
     </script>
 </body>
 </html>
