@@ -27,7 +27,7 @@
             align-items: center;
             justify-content: space-around;
             color: #fff;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             text-transform: uppercase;
             z-index: 1000;
@@ -36,9 +36,10 @@
         #header a {
             color: #fff;
             text-decoration: none;
-            padding: 5px 10px;
+            padding: 5px 8px;
             border-radius: 5px;
             transition: background 0.3s;
+            white-space: nowrap;
         }
 
         #header a:hover {
@@ -52,10 +53,12 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 1000;
+            width: 90%;
+            max-width: 300px;
         }
 
         #w3w-input {
-            width: 250px;
+            width: 100%;
             padding: 10px;
             border: none;
             border-radius: 5px;
@@ -63,6 +66,7 @@
             color: #fff;
             font-size: 14px;
             outline: none;
+            box-sizing: border-box;
         }
 
         /* Marker Styling */
@@ -85,7 +89,11 @@
             100% { box-shadow: 0px 0px 15px #00ffea; }
         }
 
-        .marker.atlantic.pulse {
+        .marker.atlantic {
+            animation: pulseAtlantic 1.5s infinite alternate;
+        }
+
+        @keyframes pulseAtlantic {
             0%   { box-shadow: 0px 0px 5px #ff4444; }
             100% { box-shadow: 0px 0px 15px #ff4444; }
         }
@@ -106,15 +114,18 @@
             border-radius: 8px;
         }
 
-        /* Location Filter */
+        /* Location Filter - Moved to bottom for mobile */
         #filter-container {
             position: absolute;
-            top: 55px;
-            right: 10px;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             z-index: 1000;
-            background: #222;
+            background: rgba(34, 34, 34, 0.9);
             padding: 10px;
             border-radius: 5px;
+            display: flex;
+            gap: 10px;
         }
 
         #filter-container button {
@@ -122,27 +133,48 @@
             color: #000;
             border: none;
             padding: 8px 12px;
-            margin: 2px;
             border-radius: 3px;
             cursor: pointer;
             font-weight: bold;
+            white-space: nowrap;
         }
 
         #filter-container button:hover {
             background: #ff00ff;
             color: #fff;
         }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            #header {
+                font-size: 12px;
+                height: 45px;
+            }
+            
+            #header a {
+                padding: 4px 6px;
+            }
+            
+            #search-container {
+                top: 50px;
+                width: 95%;
+            }
+            
+            #filter-container {
+                bottom: 10px;
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <!-- Game Header -->
+    <!-- Game Header - Removed "SHOW ALL" and "ROLL DICE" -->
     <div id="header">
         <a href="http://map.atl5d.com">🗺️ MAP.</a>
         <a href="http://pic.atl5d.com">🖼️ PIC.</a>
         <a href="http://tiktok.com/@atl5d">🤳 TIKTOK</a>
-        <a href="#" onclick="showAllLocations()">🌍 SHOW ALL</a>
-        <a href="#" onclick="rollDice()">🎲 ROLL DICE</a>
     </div>
 
     <!-- What3Words Search -->
@@ -150,10 +182,11 @@
         <input id="w3w-input" type="text" placeholder="Enter What3Words (e.g. apple.banana.orange)" onkeypress="searchW3W(event)">
     </div>
 
-    <!-- Location Filter -->
+    <!-- Location Filter - Moved to bottom -->
     <div id="filter-container">
         <button onclick="showAtlanta()">📍 ATLANTA</button>
         <button onclick="showAtlanticCity()">🎰 ATLANTIC CITY</button>
+        <button onclick="showAllLocations()">🌍 SHOW ALL</button>
     </div>
 
     <div id="map"></div>
@@ -328,11 +361,17 @@
         // Initialize with all markers
         addAllMarkers();
 
-        // Search What3Words Address
+        // Search What3Words Address - Improved error handling
         function searchW3W(event) {
             if (event.key === "Enter") {
                 let words = document.getElementById("w3w-input").value.trim();
                 if (words) {
+                    // Basic validation for what3words format (three words separated by dots)
+                    if (!words.match(/^[a-zA-Z]+\.[a-zA-Z]+\.[a-zA-Z]+$/)) {
+                        alert("Please enter a valid What3Words address format: word.word.word");
+                        return;
+                    }
+                    
                     what3words.api.convertToCoordinates({ words: words })
                         .then(response => {
                             if (response && response.coordinates) {
@@ -345,30 +384,32 @@
                                 marker.style.backgroundImage = "url(https://i.imgur.com/HZbull4.png)";
                                 marker.style.boxShadow = "0px 0px 15px #ffff00";
                                 
-                                new mapboxgl.Marker(marker)
+                                const tempMarker = new mapboxgl.Marker(marker)
                                     .setLngLat([lng, lat])
                                     .setPopup(new mapboxgl.Popup().setHTML(`
                                         <h3>Searched Location</h3>
                                         <p>///${words}</p>
                                     `))
                                     .addTo(map);
+                                
+                                // Remove temporary marker after 10 seconds
+                                setTimeout(() => {
+                                    tempMarker.remove();
+                                }, 10000);
+                                
                             } else {
-                                alert("Invalid What3Words address.");
+                                alert("Invalid What3Words address. Please check the spelling.");
                             }
                         })
-                        .catch(() => alert("Error fetching What3Words location."));
+                        .catch(error => {
+                            console.error("What3Words error:", error);
+                            alert("Error: Unable to find this What3Words location. Please check the spelling and try again.");
+                        });
                 }
             }
         }
 
-        // Dice Roll Effect
-        function rollDice() {
-            const roll = Math.floor(Math.random() * 6) + 1;
-            new mapboxgl.Popup()
-                .setLngLat(map.getCenter())
-                .setHTML(`<h2>🎲 You rolled a ${roll}!</h2>`)
-                .addTo(map);
-        }
+        // Removed rollDice function since it's no longer in the header
     </script>
 </body>
 </html>
