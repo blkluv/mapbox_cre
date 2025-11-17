@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    
-    <!-- Mapbox & What3Words -->
-    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
-    <script src="https://cdn.what3words.com/javascript-components@4-latest/dist/what3words/what3words.js?key=3UJB7WTL"></script>
 
     <title>MAP.</title>
+
+    <!-- Mapbox -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+
+    <!-- FIXED: Correct What3Words SDK -->
+    <script src="https://cdn.what3words.com/sdk/v3/what3words.js"></script>
 
     <style>
         body { margin: 0; padding: 0; background: #0a0a0a; font-family: Arial, sans-serif; }
         #map { position: absolute; top: 50px; bottom: 0; width: 100%; }
 
-        /* Game Header */
         #header {
             position: fixed;
             top: 0;
@@ -27,218 +27,90 @@
             align-items: center;
             justify-content: space-around;
             color: #fff;
-            font-size: 14px;
-            font-weight: bold;
-            text-transform: uppercase;
             z-index: 1000;
         }
-        
         #header a {
-            color: #fff;
-            text-decoration: none;
-            padding: 5px 8px;
-            border-radius: 5px;
-            transition: background 0.3s;
-            white-space: nowrap;
+            color: white; text-decoration: none; padding: 5px 8px; font-size: 14px;
         }
 
-        #header a:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Search Container */
         #search-container {
             position: absolute;
             top: 55px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 1000;
             width: 90%;
             max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
+            z-index: 1000;
         }
-
         .search-input {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            background: #222;
-            color: #fff;
-            font-size: 14px;
-            outline: none;
-            box-sizing: border-box;
+            width: 100%; padding: 10px; background: #222; color: #fff;
+            border-radius: 5px; border: none; margin-bottom: 5px;
         }
 
-        .search-input::placeholder {
-            color: #ccc;
-        }
-
-        .search-type {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-
+        .search-type { display: flex; gap: 10px; justify-content: center; }
         .search-type button {
-            background: #333;
-            color: #fff;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 12px;
+            background: #333; color: #fff; padding: 6px 10px;
+            border: none; border-radius: 4px; cursor: pointer;
+        }
+        .search-type .active { background: #00ffea; color: #000; }
+
+        .status-message {
+            position: absolute; top: 120px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); padding: 10px; color: #00ffea;
+            border-radius: 5px; display: none; z-index: 1000;
         }
 
-        .search-type button.active {
-            background: #00ffea;
-            color: #000;
+        #filter-container {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 10px; padding: 10px; background: rgba(34,34,34,0.9);
+            border-radius: 6px; z-index: 1000;
+        }
+        #filter-container button {
+            background: #00ffea; border: none; padding: 8px 12px;
+            border-radius: 4px; cursor: pointer; font-weight: bold;
         }
 
-        /* Marker Styling */
         .marker {
-            background-size: cover;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            box-shadow: 0px 0px 10px #00ffea;
-            cursor: pointer;
+            width: 40px; height: 40px;
+            background-size: cover; border-radius: 50%;
             animation: pulse 1.5s infinite alternate;
         }
+        .marker.atlantic { animation: pulseAtlantic 1.5s infinite alternate; }
 
-        .marker.atlantic {
-            box-shadow: 0px 0px 10px #ff4444;
-        }
+        @keyframes pulse { 0%{box-shadow:0 0 5px #00ffea;} 100%{box-shadow:0 0 15px #00ffea;} }
+        @keyframes pulseAtlantic { 0%{box-shadow:0 0 5px #ff4444;} 100%{box-shadow:0 0 15px #ff4444;} }
 
-        @keyframes pulse {
-            0%   { box-shadow: 0px 0px 5px #00ffea; }
-            100% { box-shadow: 0px 0px 15px #00ffea; }
-        }
-
-        .marker.atlantic {
-            animation: pulseAtlantic 1.5s infinite alternate;
-        }
-
-        @keyframes pulseAtlantic {
-            0%   { box-shadow: 0px 0px 5px #ff4444; }
-            100% { box-shadow: 0px 0px 15px #ff4444; }
-        }
-
-        /* Popup Styling */
         .mapboxgl-popup-content {
-            background: rgba(0, 0, 0, 0.8);
-            color: #fff;
-            border-radius: 10px;
-            padding: 10px;
-            text-align: center;
-            max-width: 300px;
+            background: rgba(0,0,0,0.85) !important;
+            color: #fff; border-radius: 10px;
         }
+        .mapboxgl-popup-content img { width: 100%; border-radius: 8px; }
 
-        .mapboxgl-popup-content img {
-            width: 100%;
-            max-height: 200px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-
-        /* Location Filter */
-        #filter-container {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            background: rgba(34, 34, 34, 0.9);
-            padding: 10px;
-            border-radius: 5px;
-            display: flex;
-            gap: 10px;
-        }
-
-        #filter-container button {
-            background: #00ffea;
-            color: #000;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-weight: bold;
-            white-space: nowrap;
-        }
-
-        #filter-container button:hover {
-            background: #ff00ff;
-            color: #fff;
-        }
-
-        /* Loading and Status */
-        .status-message {
-            position: absolute;
-            top: 120px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: #00ffea;
-            padding: 10px;
-            border-radius: 5px;
-            z-index: 1000;
-            display: none;
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            #header {
-                font-size: 12px;
-                height: 45px;
-            }
-            
-            #header a {
-                padding: 4px 6px;
-            }
-            
-            #search-container {
-                top: 50px;
-                width: 95%;
-            }
-            
-            #filter-container {
-                bottom: 10px;
-                flex-direction: column;
-                gap: 5px;
-            }
-            
-            .search-type {
-                flex-wrap: wrap;
-            }
-        }
     </style>
 </head>
 <body>
 
-    <!-- Game Header -->
+    <!-- Header -->
     <div id="header">
         <a href="http://map.atl5d.com">🗺️ MAP.</a>
         <a href="http://pic.atl5d.com">❤️‍🔥 TV.</a>
         <a href="http://tiktok.com/@atl5d">🤳 TIKTOK</a>
     </div>
 
-    <!-- Search Container -->
+    <!-- Search -->
     <div id="search-container">
-        <input id="address-input" type="text" class="search-input" placeholder="Enter street address (e.g. 123 Main St, Atlanta, GA)" onkeypress="searchAddress(event)" style="display: none;">
-        <input id="w3w-input" type="text" class="search-input" placeholder="Enter What3Words (e.g. filled.count.soap)" onkeypress="searchW3W(event)">
+        <input id="address-input" class="search-input" placeholder="Enter street address..." style="display:none;">
+        <input id="w3w-input" class="search-input" placeholder="Enter What3Words (e.g. filled.count.soap)">
         
         <div class="search-type">
             <button id="btn-address" onclick="setSearchType('address')">📍 Address</button>
-            <button id="btn-w3w" onclick="setSearchType('w3w')" class="active">🔤 What3Words</button>
+            <button id="btn-w3w" class="active" onclick="setSearchType('w3w')">🔤 What3Words</button>
         </div>
     </div>
 
-    <!-- Status Message -->
     <div id="status-message" class="status-message"></div>
 
-    <!-- Location Filter -->
+    <!-- Filters -->
     <div id="filter-container">
         <button onclick="showAtlanta()">📍 ATLANTA</button>
         <button onclick="showAtlanticCity()">🎰 ATLANTIC CITY</button>
@@ -247,396 +119,241 @@
 
     <div id="map"></div>
 
-    <script>
-        mapboxgl.accessToken = "pk.eyJ1IjoiZjFrdW5pIiwiYSI6ImNsaTl3Mmg5bDI2Z3ozcG53NTFnYzkyOHcifQ.kO1fY4a4TraHhQxoLYwTEg";
+<script>
 
-        let map = new mapboxgl.Map({
-            container: "map",
-            style: "mapbox://styles/mapbox/dark-v11",
-            center: [-79.5, 36.5],
-            zoom: 5
+mapboxgl.accessToken = "pk.eyJ1IjoiZjFrdW5pIiwiYSI6ImNsaTl3Mmg5bDI2Z3ozcG53NTFnYzkyOHcifQ.kO1fY4a4TraHhQxoLYwTEg";
+
+const map = new mapboxgl.Map({
+    container: "map",
+    style: "mapbox://styles/mapbox/dark-v11",
+    center: [-79.5, 36.5],
+    zoom: 5
+});
+map.addControl(new mapboxgl.NavigationControl());
+
+/* -------------------------
+   FIXED WHAT3WORDS INIT
+------------------------- */
+const w3w = new What3Words("3UJB7WTL");
+
+/* -------------------------
+   HELPERS
+------------------------- */
+function showStatus(msg, error=false) {
+    const el = document.getElementById("status-message");
+    el.textContent = msg;
+    el.style.color = error ? "#ff4444" : "#00ffea";
+    el.style.display = "block";
+    setTimeout(() => el.style.display="none", 3000);
+}
+
+let currentSearchType = "w3w";
+function setSearchType(type) {
+    currentSearchType = type;
+
+    document.getElementById("btn-address").classList.remove("active");
+    document.getElementById("btn-w3w").classList.remove("active");
+
+    if (type === "address") {
+        document.getElementById("btn-address").classList.add("active");
+        document.getElementById("address-input").style.display = "block";
+        document.getElementById("w3w-input").style.display = "none";
+    } else {
+        document.getElementById("btn-w3w").classList.add("active");
+        document.getElementById("address-input").style.display = "none";
+        document.getElementById("w3w-input").style.display = "block";
+    }
+}
+
+let tempMarkers = [];
+function clearTempMarkers() {
+    tempMarkers.forEach(m => m.remove());
+    tempMarkers = [];
+}
+
+/* -------------------------
+   W3W: words -> coordinates
+------------------------- */
+async function w3wToCoords(words) {
+    try {
+        const result = await w3w.convertToCoordinates({ words });
+        return result.coordinates;
+    } catch (e) {
+        console.error(e);
+        return null;
+    }
+}
+
+/* -------------------------
+   W3W: coordinates -> words
+------------------------- */
+async function coordsToW3W(lat, lng) {
+    try {
+        const result = await w3w.convertTo3wa({
+            coordinates: { lat, lng }
         });
+        return result.words;
+    } catch (e) {
+        console.error(e);
+        return null;
+    }
+}
 
-        map.addControl(new mapboxgl.NavigationControl());
-        let currentSearchType = 'w3w';
-        let tempMarkers = [];
-        let what3wordsAPI;
+/* -------------------------
+   SEARCH: What3Words
+------------------------- */
+document.getElementById("w3w-input").addEventListener("keypress", async (event)=>{
+    if (event.key !== "Enter") return;
 
-        // Initialize What3Words API
-        function initW3W() {
-            what3wordsAPI = what3words();
-            console.log("What3Words API initialized");
-        }
+    let words = event.target.value.trim().toLowerCase();
+    if (!/^[a-z]+\.[a-z]+\.[a-z]+$/.test(words)) {
+        showStatus("Invalid W3W format (word.word.word)", true);
+        return;
+    }
 
-        // Show status message
-        function showStatus(message, isError = false) {
-            const statusEl = document.getElementById('status-message');
-            statusEl.textContent = message;
-            statusEl.style.color = isError ? '#ff4444' : '#00ffea';
-            statusEl.style.display = 'block';
-            setTimeout(() => {
-                statusEl.style.display = 'none';
-            }, 3000);
-        }
+    showStatus("Searching W3W...");
 
-        // Set search type
-        function setSearchType(type) {
-            currentSearchType = type;
-            document.getElementById('btn-address').classList.remove('active');
-            document.getElementById('btn-w3w').classList.remove('active');
-            
-            if (type === 'address') {
-                document.getElementById('btn-address').classList.add('active');
-                document.getElementById('address-input').style.display = 'block';
-                document.getElementById('w3w-input').style.display = 'none';
-                document.getElementById('address-input').focus();
-            } else {
-                document.getElementById('btn-w3w').classList.add('active');
-                document.getElementById('address-input').style.display = 'none';
-                document.getElementById('w3w-input').style.display = 'block';
-                document.getElementById('w3w-input').focus();
-            }
-        }
+    const coords = await w3wToCoords(words);
+    if (!coords) return showStatus("W3W not found", true);
 
-        // Clear temporary markers
-        function clearTempMarkers() {
-            tempMarkers.forEach(marker => marker.remove());
-            tempMarkers = [];
-        }
+    const { lat, lng } = coords;
 
-        // Search by address and convert to What3Words
-        function searchAddress(event) {
-            if (event.key === "Enter") {
-                let address = document.getElementById("address-input").value.trim();
-                if (address) {
-                    clearTempMarkers();
-                    showStatus("Searching for address...");
-                    
-                    // Use Mapbox Geocoding to convert address to coordinates
-                    fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxgl.accessToken}&limit=1`)
-                        .then(response => {
-                            if (!response.ok) throw new Error('Network response was not ok');
-                            return response.json();
-                        })
-                        .then(data => {
-                            if (data.features && data.features.length > 0) {
-                                const [lng, lat] = data.features[0].center;
-                                const placeName = data.features[0].place_name;
-                                
-                                // Fly to the location
-                                map.flyTo({ center: [lng, lat], zoom: 15 });
-                                
-                                showStatus("Converting to What3Words...");
-                                
-                                // Convert coordinates to What3Words using direct API call
-                                fetch(`https://api.what3words.com/v3/convert-to-3wa?coordinates=${lat},${lng}&key=3UJB7WTL`)
-                                    .then(response => {
-                                        if (!response.ok) throw new Error('W3W API response was not ok');
-                                        return response.json();
-                                    })
-                                    .then(w3wResponse => {
-                                        if (w3wResponse && w3wResponse.words) {
-                                            const w3w = w3wResponse.words;
-                                            
-                                            // Add marker with both address and W3W info
-                                            const marker = document.createElement("div");
-                                            marker.className = "marker";
-                                            marker.style.backgroundImage = "url(https://i.imgur.com/HZbull4.png)";
-                                            marker.style.boxShadow = "0px 0px 15px #ffff00";
-                                            
-                                            const tempMarker = new mapboxgl.Marker(marker)
-                                                .setLngLat([lng, lat])
-                                                .setPopup(new mapboxgl.Popup().setHTML(`
-                                                    <h3>📍 ${placeName}</h3>
-                                                    <p><strong>What3Words:</strong> ///${w3w}</p>
-                                                    <p><em>Address found and converted to W3W</em></p>
-                                                    <a href="https://what3words.com/${w3w}" target="_blank" style="color: #00ffea;">Open in What3Words</a>
-                                                `))
-                                                .addTo(map);
-                                            
-                                            tempMarkers.push(tempMarker);
-                                            
-                                            // Update search field to show the W3W
-                                            document.getElementById("w3w-input").value = w3w;
-                                            showStatus("Address converted to What3Words!");
-                                            
-                                        } else {
-                                            throw new Error('No W3W response');
-                                        }
-                                    })
-                                    .catch(w3wError => {
-                                        console.error("W3W conversion error:", w3wError);
-                                        showStatus("Found address but couldn't convert to What3Words", true);
-                                    });
-                                
-                            } else {
-                                showStatus("Address not found. Please try a more specific address.", true);
-                            }
-                        })
-                        .catch(error => {
-                            console.error("Geocoding error:", error);
-                            showStatus("Error searching for address. Please check your connection.", true);
-                        });
-                }
-            }
-        }
+    map.flyTo({ center:[lng,lat], zoom:15 });
 
-        // Search by What3Words and convert to address
-        function searchW3W(event) {
-            if (event.key === "Enter") {
-                let words = document.getElementById("w3w-input").value.trim().toLowerCase();
-                if (words) {
-                    clearTempMarkers();
-                    showStatus("Searching for What3Words location...");
-                    
-                    // Enhanced validation for what3words format
-                    const w3wRegex = /^[a-z]+\.[a-z]+\.[a-z]+$/;
-                    if (!w3wRegex.test(words)) {
-                        showStatus("Please enter valid What3Words format: word.word.word", true);
-                        return;
-                    }
-                    
-                    // Use direct What3Words API call
-                    fetch(`https://api.what3words.com/v3/convert-to-coordinates?words=${words}&key=3UJB7WTL`)
-                        .then(response => {
-                            if (!response.ok) throw new Error('W3W API response was not ok');
-                            return response.json();
-                        })
-                        .then(response => {
-                            if (response && response.coordinates) {
-                                const { lat, lng } = response.coordinates;
-                                
-                                // Fly to the location
-                                map.flyTo({ center: [lng, lat], zoom: 15 });
-                                
-                                showStatus("Converting to address...");
-                                
-                                // Convert coordinates back to address using Mapbox reverse geocoding
-                                fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}&types=address,place`)
-                                    .then(geoResponse => geoResponse.json())
-                                    .then(geoData => {
-                                        let address = "Address not found";
-                                        if (geoData.features && geoData.features.length > 0) {
-                                            address = geoData.features[0].place_name;
-                                        }
-                                        
-                                        // Add marker with both W3W and address info
-                                        const marker = document.createElement("div");
-                                        marker.className = "marker";
-                                        marker.style.backgroundImage = "url(https://i.imgur.com/HZbull4.png)";
-                                        marker.style.boxShadow = "0px 0px 15px #ffff00";
-                                        
-                                        const tempMarker = new mapboxgl.Marker(marker)
-                                            .setLngLat([lng, lat])
-                                            .setPopup(new mapboxgl.Popup().setHTML(`
-                                                <h3>🔤 ///${words}</h3>
-                                                <p><strong>Address:</strong> ${address}</p>
-                                                <p><em>What3Words converted to address</em></p>
-                                                <a href="https://what3words.com/${words}" target="_blank" style="color: #00ffea;">Open in What3Words</a>
-                                            `))
-                                            .addTo(map);
-                                        
-                                        tempMarkers.push(tempMarker);
-                                        
-                                        // Update address field if visible
-                                        document.getElementById("address-input").value = address;
-                                        showStatus("What3Words converted to address!");
-                                        
-                                    })
-                                    .catch(geoError => {
-                                        console.error("Reverse geocoding error:", geoError);
-                                        // Still add marker even if reverse geocoding fails
-                                        const marker = document.createElement("div");
-                                        marker.className = "marker";
-                                        marker.style.backgroundImage = "url(https://i.imgur.com/HZbull4.png)";
-                                        marker.style.boxShadow = "0px 0px 15px #ffff00";
-                                        
-                                        const tempMarker = new mapboxgl.Marker(marker)
-                                            .setLngLat([lng, lat])
-                                            .setPopup(new mapboxgl.Popup().setHTML(`
-                                                <h3>🔤 ///${words}</h3>
-                                                <p><em>What3Words location found</em></p>
-                                                <a href="https://what3words.com/${words}" target="_blank" style="color: #00ffea;">Open in What3Words</a>
-                                            `))
-                                            .addTo(map);
-                                        
-                                        tempMarkers.push(tempMarker);
-                                        showStatus("Location found but address conversion failed", true);
-                                    });
-                                
-                            } else {
-                                showStatus("Invalid What3Words address. Please check spelling.", true);
-                            }
-                        })
-                        .catch(error => {
-                            console.error("What3Words error:", error);
-                            showStatus("Error: Unable to find this What3Words location.", true);
-                        });
-                }
-            }
-        }
+    const mk = new mapboxgl.Marker()
+        .setLngLat([lng, lat])
+        .setPopup(new mapboxgl.Popup().setHTML(`
+            <h3>///${words}</h3>
+            <p>Lat: ${lat}<br>Lng: ${lng}</p>
+        `))
+        .addTo(map);
 
-        // Rest of your existing code for markers and locations...
-        const locations = [
-            {
-                name: "Magic City Kitchen",
-                location: [-84.3923, 33.7490],
-                image: "https://i.imgur.com/fvjCvlx.jpeg",
-                info: 'Visit <a href="https://what3words.com/famous.kitchen.magic" target="_blank" style="color: #00ffea;">///famous.kitchen.magic</a> for 15% OFF with code ATL5D',
-                website: "https://magiccitykitchen.com",
-                video: "https://www.youtube.com/shorts/ABf96TPBuqs",
-                city: "atlanta"
-            },
-            {
-                name: "HEAT Personal Training",
-                location: [-84.3856, 33.7749],
-                image: "https://i.imgur.com/WnZE6Vb.jpeg",
-                info: 'Train at <a href="https://what3words.com/burn.sweat.heat" target="_blank" style="color: #00ffea;">///burn.sweat.heat</a> - First session FREE with code ATL5D',
-                website: "https://heatpersonaltraining.com",
-                video: "https://www.youtube.com/shorts/t84JpJ6iglo",
-                city: "atlanta"
-            },
-            {
-                name: "MARTA Five Points Station",
-                location: [-84.3915, 33.7541],
-                image: "https://i.imgur.com/5qlQfGA.png",
-                info: 'Central hub at <a href="https://what3words.com/connect.transit.city" target="_blank" style="color: #00ffea;">///connect.transit.city</a> - Show ATL5D badge for express lane',
-                website: "https://itsmarta.com",
-                video: "https://www.youtube.com/shorts/HgY3myHKcQ4",
-                city: "atlanta"
-            },
-            {
-                name: "Ariskbiu Ice Cream",
-                location: [-84.3782, 33.7489],
-                image: "https://i.imgur.com/ARISKBIIUIMAGE.png",
-                info: 'Black-owned delight at <a href="https://what3words.com/sweet.cream.black" target="_blank" style="color: #00ffea;">///sweet.cream.black</a> - BOGO with code ATL5D',
-                website: "https://ariskbiucream.com",
-                video: "https://www.youtube.com/embed/ARISKBIIUVIDEOID",
-                city: "atlanta"
-            },
-            {
-                name: "High Rollers Atlantic City Dispensary",
-                location: [-74.432096, 39.35798], 
-                image: "https://i.imgur.com/RjWVKhN.png",
-                info: 'Visit <a href="https://what3words.com/film.client.darker" target="_blank" style="color: #00ffea;">///film.client.darker</a> for 50% OFF with WEEDW3W1',
-                website: "https://highrollersac.com",
-                video: "https://gateway.pinata.cloud/ipfs/QmYourVideoHash",
-                city: "atlantic"
-            }
-        ];
+    tempMarkers.push(mk);
 
-        let markers = [];
+    showStatus("What3Words location found!");
+});
 
-        // Add All Markers
-        function addAllMarkers() {
-            markers.forEach(marker => marker.remove());
-            markers = [];
+/* -------------------------
+   SEARCH: Address -> W3W
+------------------------- */
+document.getElementById("address-input").addEventListener("keypress", async (event)=>{
+    if (event.key !== "Enter") return;
 
-            locations.forEach(location => {
-                const marker = document.createElement("div");
-                marker.className = "marker";
-                if (location.city === "atlantic") {
-                    marker.classList.add("atlantic");
-                }
-                marker.style.backgroundImage = "url(https://i.imgur.com/HZbull4.png)";
+    let address = event.target.value.trim();
+    if (!address) return;
 
-                const mapMarker = new mapboxgl.Marker(marker)
-                    .setLngLat(location.location)
-                    .setPopup(new mapboxgl.Popup().setHTML(`
-                        <img src="${location.image}" />
-                        <h3>${location.name}</h3>
-                        <p>${location.info}</p>
-                        <a href="${location.website}" target="_blank" style="color: #00ffea;">🌐 Visit Website</a><br>
-                        <a href="${location.video}" target="_blank" style="color: #ff00ff;">📹 Watch Reel</a>
-                    `))
-                    .addTo(map);
+    showStatus("Searching address...");
 
-                markers.push(mapMarker);
-            });
-        }
+    const geo = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxgl.accessToken}&limit=1`)
+        .then(r=>r.json())
+        .catch(()=>null);
 
-        // Show All Locations
-        function showAllLocations() {
-            addAllMarkers();
-            map.flyTo({
-                center: [-79.5, 36.5],
-                zoom: 5,
-                essential: true
-            });
-        }
+    if (!geo || !geo.features.length) return showStatus("Address not found", true);
 
-        // Show Only Atlanta
-        function showAtlanta() {
-            markers.forEach(marker => marker.remove());
-            markers = [];
+    const [lng, lat] = geo.features[0].center;
 
-            locations.filter(loc => loc.city === "atlanta").forEach(location => {
-                const marker = document.createElement("div");
-                marker.className = "marker";
-                marker.style.backgroundImage = "url(https://i.imgur.com/HZbull4.png)";
+    map.flyTo({ center:[lng,lat], zoom:15 });
 
-                const mapMarker = new mapboxgl.Marker(marker)
-                    .setLngLat(location.location)
-                    .setPopup(new mapboxgl.Popup().setHTML(`
-                        <img src="${location.image}" />
-                        <h3>${location.name}</h3>
-                        <p>${location.info}</p>
-                        <a href="${location.website}" target="_blank" style="color: #00ffea;">🌐 Visit Website</a><br>
-                        <a href="${location.video}" target="_blank" style="color: #ff00ff;">📹 Watch Reel</a>
-                    `))
-                    .addTo(map);
+    showStatus("Converting to W3W...");
+    const words = await coordsToW3W(lat, lng);
+    if (!words) return showStatus("W3W conversion failed", true);
 
-                markers.push(mapMarker);
-            });
+    document.getElementById("w3w-input").value = words;
 
-            map.flyTo({
-                center: [-84.3989, 33.7917],
-                zoom: 13,
-                essential: true
-            });
-        }
+    const mk = new mapboxgl.Marker()
+        .setLngLat([lng, lat])
+        .setPopup(new mapboxgl.Popup().setHTML(`
+            <h3>${address}</h3>
+            <p>W3W: ///${words}</p>
+        `))
+        .addTo(map);
 
-        // Show Only Atlantic City
-        function showAtlanticCity() {
-            markers.forEach(marker => marker.remove());
-            markers = [];
+    tempMarkers.push(mk);
 
-            locations.filter(loc => loc.city === "atlantic").forEach(location => {
-                const marker = document.createElement("div");
-                marker.className = "marker atlantic";
-                marker.style.backgroundImage = "url(https://i.imgur.com/HZbull4.png)";
+    showStatus("Converted to What3Words!");
+});
 
-                const mapMarker = new mapboxgl.Marker(marker)
-                    .setLngLat(location.location)
-                    .setPopup(new mapboxgl.Popup().setHTML(`
-                        <img src="${location.image}" />
-                        <h3>${location.name}</h3>
-                        <p>${location.info}</p>
-                        <a href="${location.website}" target="_blank" style="color: #00ffea;">🌐 Visit Website</a><br>
-                        <a href="${location.video}" target="_blank" style="color: #ff00ff;">📹 Watch Reel</a>
-                    `))
-                    .addTo(map);
+/* -------------------------
+   MARKERS
+------------------------- */
+const locations = [
+    {
+        name:"Magic City Kitchen",
+        location:[-84.3923,33.7490],
+        image:"https://i.imgur.com/fvjCvlx.jpeg",
+        info:`Visit <a href="https://what3words.com/famous.kitchen.magic" target="_blank">///famous.kitchen.magic</a>`,
+        website:"https://magiccitykitchen.com",
+        video:"https://www.youtube.com/shorts/ABf96TPBuqs",
+        city:"atlanta"
+    },
+    {
+        name:"HEAT Personal Training",
+        location:[-84.3856,33.7749],
+        image:"https://i.imgur.com/WnZE6Vb.jpeg",
+        info:`Train at <a href="https://what3words.com/burn.sweat.heat" target="_blank">///burn.sweat.heat</a>`,
+        website:"https://heatpersonaltraining.com",
+        video:"https://www.youtube.com/shorts/t84JpJ6iglo",
+        city:"atlanta"
+    },
+    {
+        name:"MARTA Five Points Station",
+        location:[-84.3915,33.7541],
+        image:"https://i.imgur.com/5qlQfGA.png",
+        info:`<a href="https://what3words.com/connect.transit.city" target="_blank">///connect.transit.city</a>`,
+        website:"https://itsmarta.com",
+        video:"https://www.youtube.com/shorts/HgY3myHKcQ4",
+        city:"atlanta"
+    },
+    {
+        name:"High Rollers AC",
+        location:[-74.432096,39.35798],
+        image:"https://i.imgur.com/RjWVKhN.png",
+        info:`<a href="https://what3words.com/film.client.darker" target="_blank">///film.client.darker</a>`,
+        website:"https://highrollersac.com",
+        video:"",
+        city:"atlantic"
+    }
+];
 
-                markers.push(mapMarker);
-            });
+let markers = [];
 
-            map.flyTo({
-                center: [-74.432096, 39.35798],
-                zoom: 15,
-                essential: true
-            });
-        }
+function addAllMarkers() {
+    markers.forEach(m=>m.remove());
+    markers = [];
 
-        // Initialize with all markers
-        addAllMarkers();
+    locations.forEach(loc=>{
+        const mk = new mapboxgl.Marker({ color:"#00ffea" })
+            .setLngLat(loc.location)
+            .setPopup(new mapboxgl.Popup().setHTML(`
+                <img src="${loc.image}">
+                <h3>${loc.name}</h3>
+                <p>${loc.info}</p>
+                <a href="${loc.website}" target="_blank" style="color:#00ffea;">🌐 Website</a>
+            `))
+            .addTo(map);
+        markers.push(mk);
+    });
+}
 
-        // Set default search type
-        setSearchType('w3w');
+function showAtlanta() {
+    addAllMarkers();
+    map.flyTo({ center:[-84.39,33.77], zoom:13 });
+}
 
-        // Initialize What3Words when the script loads
-        document.addEventListener('DOMContentLoaded', function() {
-            initW3W();
-        });
-    </script>
+function showAtlanticCity() {
+    addAllMarkers();
+    map.flyTo({ center:[-74.43,39.36], zoom:15 });
+}
+
+function showAllLocations() {
+    addAllMarkers();
+    map.flyTo({ center:[-79.5,36.5], zoom:5 });
+}
+
+addAllMarkers();
+setSearchType("w3w");
+
+</script>
+
 </body>
 </html>
