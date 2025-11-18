@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>MAP.</title>
 
     <!-- Mapbox -->
@@ -11,7 +10,7 @@
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
 
     <!-- FIXED: Correct What3Words SDK -->
-    <script src="https://cdn.what3words.com/sdk/v3/what3words.js"></script>
+    <script src="https://maps.what3words.com/sdk/v3/what3words.js?key=3UJB7WTL"></script>
 
     <style>
         body { margin: 0; padding: 0; background: #0a0a0a; font-family: Arial, sans-serif; }
@@ -134,7 +133,8 @@ map.addControl(new mapboxgl.NavigationControl());
 /* -------------------------
    FIXED WHAT3WORDS INIT
 ------------------------- */
-const w3w = new What3Words("3UJB7WTL");
+// The API key is now included in the SDK script tag
+// We'll use the global what3words object that's automatically available
 
 /* -------------------------
    HELPERS
@@ -176,10 +176,21 @@ function clearTempMarkers() {
 ------------------------- */
 async function w3wToCoords(words) {
     try {
-        const result = await w3w.convertToCoordinates({ words });
-        return result.coordinates;
+        // FIXED: Use the correct API method
+        const response = await fetch(`https://api.what3words.com/v3/convert-to-coordinates?words=${encodeURIComponent(words)}&key=3UJB7WTL`);
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error.message);
+        }
+        
+        return {
+            lat: data.coordinates.lat,
+            lng: data.coordinates.lng
+        };
     } catch (e) {
-        console.error(e);
+        console.error("W3W to Coords error:", e);
+        showStatus("W3W lookup failed: " + e.message, true);
         return null;
     }
 }
@@ -189,12 +200,18 @@ async function w3wToCoords(words) {
 ------------------------- */
 async function coordsToW3W(lat, lng) {
     try {
-        const result = await w3w.convertTo3wa({
-            coordinates: { lat, lng }
-        });
-        return result.words;
+        // FIXED: Use the correct API method
+        const response = await fetch(`https://api.what3words.com/v3/convert-to-3wa?coordinates=${lat},${lng}&key=3UJB7WTL`);
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error.message);
+        }
+        
+        return data.words;
     } catch (e) {
-        console.error(e);
+        console.error("Coords to W3W error:", e);
+        showStatus("W3W conversion failed: " + e.message, true);
         return null;
     }
 }
@@ -212,24 +229,25 @@ document.getElementById("w3w-input").addEventListener("keypress", async (event)=
     }
 
     showStatus("Searching W3W...");
+    clearTempMarkers();
 
     const coords = await w3wToCoords(words);
-    if (!coords) return showStatus("W3W not found", true);
+    if (!coords) return;
 
     const { lat, lng } = coords;
 
     map.flyTo({ center:[lng,lat], zoom:15 });
 
-    const mk = new mapboxgl.Marker()
+    const mk = new mapboxgl.Marker({ color: "#ff00ff" })
         .setLngLat([lng, lat])
         .setPopup(new mapboxgl.Popup().setHTML(`
             <h3>///${words}</h3>
-            <p>Lat: ${lat}<br>Lng: ${lng}</p>
+            <p>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}</p>
+            <a href="https://what3words.com/${words}" target="_blank" style="color:#00ffea;">Open in W3W</a>
         `))
         .addTo(map);
 
     tempMarkers.push(mk);
-
     showStatus("What3Words location found!");
 });
 
@@ -243,6 +261,7 @@ document.getElementById("address-input").addEventListener("keypress", async (eve
     if (!address) return;
 
     showStatus("Searching address...");
+    clearTempMarkers();
 
     const geo = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxgl.accessToken}&limit=1`)
         .then(r=>r.json())
@@ -256,20 +275,20 @@ document.getElementById("address-input").addEventListener("keypress", async (eve
 
     showStatus("Converting to W3W...");
     const words = await coordsToW3W(lat, lng);
-    if (!words) return showStatus("W3W conversion failed", true);
+    if (!words) return;
 
     document.getElementById("w3w-input").value = words;
 
-    const mk = new mapboxgl.Marker()
+    const mk = new mapboxgl.Marker({ color: "#ff00ff" })
         .setLngLat([lng, lat])
         .setPopup(new mapboxgl.Popup().setHTML(`
             <h3>${address}</h3>
             <p>W3W: ///${words}</p>
+            <a href="https://what3words.com/${words}" target="_blank" style="color:#00ffea;">Open in W3W</a>
         `))
         .addTo(map);
 
     tempMarkers.push(mk);
-
     showStatus("Converted to What3Words!");
 });
 
@@ -350,6 +369,7 @@ function showAllLocations() {
     map.flyTo({ center:[-79.5,36.5], zoom:5 });
 }
 
+// Initialize
 addAllMarkers();
 setSearchType("w3w");
 
