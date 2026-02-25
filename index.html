@@ -44,11 +44,17 @@
 
     /* Top Control Bar */
     #controls{
-      position:absolute; top:74px; left:10px; right:10px;
-      z-index:1000; display:flex; gap:10px; flex-wrap:wrap;
-      align-items:center; justify-content:space-between;
-      pointer-events:none;
-    }
+  position:absolute;
+  top:74px;
+  left:10px;
+  right:10px;
+  z-index:2000;   /* raise above map */
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+}
 
     .control-card{
       pointer-events:auto;
