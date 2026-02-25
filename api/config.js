@@ -1,5 +1,10 @@
 export default function handler(req, res) {
-  res.status(200).json({
-    mapboxToken: process.env.NEXT_PUBLIC_MAPBOX_TOKEN
-  });
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    
+    // Only expose what's needed client-side
+    res.status(200).json({
+        mapboxToken: process.env.MAPBOX_TOKEN,
+        // Never expose sensitive tokens here
+        telegramBotUsername: "@atlwarehouse" // safe to expose
+    });
 }
