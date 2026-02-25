@@ -13,99 +13,44 @@
       --aqua: #00f2ff;
       --pink: #ff007f;
       --neon-green: #39ff14;
-      --glass: rgba(15, 15, 15, 0.85);
+      --glass: rgba(15, 15, 15, 0.90);
       --border: rgba(255, 255, 255, 0.1);
     }
 
     body { margin:0; padding:0; background:#050505; font-family: 'Inter', sans-serif; color: white; overflow: hidden; }
-    #map { position:absolute; top:0; bottom:0; width:100%; filter: saturate(1.2) brightness(0.8); }
+    #map { position:absolute; top:0; bottom:0; width:100%; }
 
-    /* TikTok Friendly Header */
-    #header {
-      position: fixed; top: 20px; left: 20px; right: 20px;
-      display: flex; justify-content: space-between; align-items: center;
-      z-index: 1000; pointer-events: none;
-    }
+    /* UI Layers */
+    #header { position: fixed; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; pointer-events: none; }
+    .brand { background: var(--glass); backdrop-filter: blur(10px); padding: 12px 20px; border-radius: 40px; border: 1px solid var(--border); font-weight: 900; color: var(--aqua); pointer-events: auto; }
+    .stats-pill { background: var(--pink); color: white; padding: 8px 16px; border-radius: 40px; font-weight: 900; font-size: 11px; animation: pulse-red 2s infinite; pointer-events: auto; }
 
-    .brand {
-      background: var(--glass); backdrop-filter: blur(10px);
-      padding: 12px 20px; border-radius: 40px; border: 1px solid var(--border);
-      font-weight: 900; letter-spacing: 2px; font-size: 14px; color: var(--aqua);
-      box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); pointer-events: auto;
-    }
-
-    .stats-pill {
-      background: var(--pink); color: white; padding: 8px 16px; 
-      border-radius: 40px; font-weight: 900; font-size: 12px;
-      animation: pulse-red 2s infinite; pointer-events: auto;
-    }
-
-    /* Floating Action Dock */
-    #dock {
-      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-      display: flex; gap: 15px; z-index: 1000; padding: 10px;
-      background: var(--glass); backdrop-filter: blur(20px);
-      border-radius: 100px; border: 1px solid var(--border);
-    }
-
-    .dock-btn {
-      width: 50px; height: 50px; border-radius: 50%; border: none;
-      background: rgba(255,255,255,0.05); color: white; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
+    #dock { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; z-index: 1000; padding: 12px; background: var(--glass); backdrop-filter: blur(20px); border-radius: 100px; border: 1px solid var(--border); }
+    .dock-btn { width: 48px; height: 48px; border-radius: 50%; border: none; background: rgba(255,255,255,0.05); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
     .dock-btn:hover { transform: scale(1.2); background: var(--aqua); color: black; }
 
-    /* Bottom Sheet - Mobile First */
-    #sheet {
-      position: fixed; left: 0; right: 0; bottom: 0; height: 65vh;
-      background: #0a0a0a; border-radius: 30px 30px 0 0;
-      transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 2000; padding: 30px; border-top: 1px solid var(--aqua);
-    }
-
+    #sheet { position: fixed; left: 0; right: 0; bottom: 0; height: 60vh; background: #0a0a0a; border-radius: 30px 30px 0 0; transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2000; padding: 30px; border-top: 2px solid var(--aqua); }
     #sheet.open { transform: translateY(0); }
-    #sheet-close { position: absolute; right: 20px; top: 20px; background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
+    #sheet-close { position: absolute; right: 20px; top: 20px; background: none; border: none; color: white; font-size: 28px; cursor: pointer; }
 
-    .grade-badge {
-      font-size: 48px; font-weight: 900; color: var(--aqua);
-      text-shadow: 0 0 20px rgba(0,242,255,0.5);
-    }
-
-    @keyframes pulse-red {
-      0% { box-shadow: 0 0 0 0 rgba(255, 0, 127, 0.7); }
-      70% { box-shadow: 0 0 0 15px rgba(255, 0, 127, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(255, 0, 127, 0); }
-    }
-
-    .scanline {
-      width: 100%; height: 2px; background: var(--aqua);
-      position: fixed; top: 0; left: 0; z-index: 3000;
-      opacity: 0.3; pointer-events: none;
-      animation: scan 4s linear infinite;
-    }
-
-    @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+    .grade-badge { font-size: 56px; font-weight: 900; color: var(--aqua); text-shadow: 0 0 20px rgba(0,242,255,0.4); }
+    @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 127, 0.6); } 70% { box-shadow: 0 0 0 15px rgba(255, 0, 127, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 127, 0); } }
   </style>
 </head>
 <body>
 
-  <div class="scanline"></div>
-
   <div id="header">
-    <div class="brand">ATL WAREHOUSE // COMMAND</div>
-    <div id="unit-count" class="stats-pill">SCANNING NETWORK...</div>
+    <div class="brand">ATL // COMMAND</div>
+    <div id="unit-count" class="stats-pill">INITIALIZING...</div>
   </div>
 
   <div id="map"></div>
 
   <div id="dock">
-    <button class="dock-btn" onclick="toggleLayer('warehouse-heat')" title="Heatmap">🔥</button>
-    <button class="dock-btn" onclick="flyToCluster('South Fulton')" title="Labor Cluster">👷</button>
-    <button class="dock-btn" style="background: var(--aqua); color:black;" title="Add Warehouse">+</button>
-    <button class="dock-btn" onclick="filterVerified()" title="Verification">✅</button>
-    <button class="dock-btn" onclick="toggleSatellite()" title="Satellite">🛰️</button>
+    <button class="dock-btn">🔥</button>
+    <button class="dock-btn">👷</button>
+    <button class="dock-btn" style="background:var(--aqua); color:black;">+</button>
+    <button class="dock-btn">✅</button>
   </div>
 
   <div id="sheet">
@@ -113,30 +58,21 @@
     <div style="display:flex; justify-content:space-between; align-items:flex-start;">
         <div>
             <h1 id="sheet-title" style="margin:0; font-size:24px; color:var(--aqua);">WAREHOUSE</h1>
-            <p id="sheet-location" style="color:#888;">Atlanta Industrial Corridor</p>
+            <p id="sheet-location" style="color:#888;">Industrial Hub</p>
         </div>
         <div class="grade-badge" id="sheet-grade">--</div>
     </div>
-
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:20px;">
         <div style="background:rgba(255,255,255,0.03); padding:15px; border-radius:15px;">
-            <div style="color:var(--aqua); font-size:10px; font-weight:900;">POWER CAPACITY</div>
+            <div style="color:var(--aqua); font-size:10px; font-weight:900;">POWER</div>
             <div style="font-size:20px; font-weight:900;" id="sheet-power">-- MW</div>
         </div>
         <div style="background:rgba(255,255,255,0.03); padding:15px; border-radius:15px;">
-            <div style="color:var(--pink); font-size:10px; font-weight:900;">DRAYAGE ZONE</div>
+            <div style="color:var(--pink); font-size:10px; font-weight:900;">DRAYAGE</div>
             <div style="font-size:20px; font-weight:900;" id="sheet-drayage">--</div>
         </div>
     </div>
-
-    <div id="viral-stat" style="margin-top:20px; border-left: 4px solid var(--neon-green); padding-left:15px;">
-        <p style="color:var(--neon-green); font-weight:900; margin:0;">3PL EFFICIENCY MATCH</p>
-        <h2 id="sheet-match" style="margin:5px 0;">--%</h2>
-    </div>
-
-    <div id="sheet-tags" style="display:flex; gap:10px; margin-top:15px; flex-wrap:wrap;"></div>
-
-    <button onclick="window.open('https://ops.atlwarehouse.com')" style="width:100%; margin-top:30px; padding:18px; border-radius:15px; border:none; background:var(--aqua); font-weight:900; font-size:16px; cursor:pointer;">REQUEST LOGISTICS REPORT</button>
+    <button style="width:100%; margin-top:30px; padding:18px; border-radius:15px; border:none; background:var(--aqua); font-weight:900; cursor:pointer;">BOOK SITE VISIT</button>
   </div>
 
 <script>
@@ -149,13 +85,13 @@
     map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/blkluv/cmm259s0u00eg01s322oh9vfd', 
-      center: [-84.42, 33.64], // Centers on Airport Industrial Cluster
+      center: [-84.42, 33.64], 
       zoom: 10.5,
-      pitch: 55,
-      antialias: true
+      pitch: 55
     });
 
-    map.on('load', async () => {
+    // CRITICAL: style.load ensures layers are added even after a style switch
+    map.on('style.load', async () => {
       const response = await fetch('/api/facilities');
       const data = await response.json();
       
@@ -163,65 +99,41 @@
 
       map.addSource('warehouses', {
         type: 'geojson',
-        data: data,
-        cluster: true,
-        clusterMaxZoom: 14,
-        clusterRadius: 50
+        data: data
       });
 
-      // 1. Heatmap Layer for "Viral" Visuals
+      // Layer 1: Heatmap
       map.addLayer({
         id: 'warehouse-heat',
         type: 'heatmap',
         source: 'warehouses',
         paint: {
-          'heatmap-weight': ['interpolate', ['linear'], ['get', 'power_mw'], 0, 0, 6, 1],
           'heatmap-intensity': 1,
-          'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'], 0, 'rgba(0,0,0,0)', 0.5, 'rgba(0,242,255,0.5)', 1, 'rgba(255,0,127,1)'],
-          'heatmap-radius': 30,
-          'heatmap-opacity': 0.4
+          'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'], 0, 'rgba(0,0,0,0)', 0.5, 'rgba(0,242,255,0.3)', 1, 'rgba(255,0,127,0.7)'],
+          'heatmap-radius': 25,
+          'heatmap-opacity': 0.5
         }
       });
 
-      // 2. Pulse Glow for Verified Class A
-      map.addLayer({
-        id: 'warehouse-glow',
-        type: 'circle',
-        source: 'warehouses',
-        filter: ['!', ['has', 'point_count']],
-        paint: {
-          'circle-radius': 20,
-          'circle-color': '#00f2ff',
-          'circle-opacity': ['case', ['==', ['get', 'verified'], 1], 0.3, 0],
-          'circle-blur': 1
-        }
-      });
-
-      // 3. The Main Interactivity Layer
+      // Layer 2: Clickable Points
       map.addLayer({
         id: 'warehouse-points',
         type: 'circle',
         source: 'warehouses',
-        filter: ['!', ['has', 'point_count']],
         paint: {
-          'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 6, 15, 14],
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 5, 15, 10],
           'circle-color': [
             'case',
-            ['==', ['get', 'verified'], 1], '#ffd000', // Gold for verified
+            ['==', ['get', 'verified'], 1], '#ffd000',
             ['==', ['get', 'grade'], 'A'], '#00f2ff',
-            ['==', ['get', 'grade'], 'B+'], '#ff007f',
             '#ffffff'
           ],
-          'circle-stroke-width': 2,
+          'circle-stroke-width': 1.5,
           'circle-stroke-color': '#000'
         }
       });
 
-      map.on('click', 'warehouse-points', (e) => {
-        const props = e.features[0].properties;
-        openSheet(props);
-      });
-      
+      map.on('click', 'warehouse-points', (e) => openSheet(e.features[0].properties));
       map.on('mouseenter', 'warehouse-points', () => map.getCanvas().style.cursor = 'pointer');
       map.on('mouseleave', 'warehouse-points', () => map.getCanvas().style.cursor = '');
     });
@@ -232,23 +144,10 @@
     document.getElementById('sheet-power').innerText = (p.power_mw || '2.5') + ' MW';
     document.getElementById('sheet-grade').innerText = p.grade || 'C';
     document.getElementById('sheet-drayage').innerText = p.drayage_zone || 'OUTER';
-    document.getElementById('sheet-match').innerText = (80 + Math.random() * 19).toFixed(1) + '%';
-    
-    // Inject Dynamic Tags (Unique Value)
-    const tags = document.getElementById('sheet-tags');
-    tags.innerHTML = '';
-    if(p.verified) tags.innerHTML += '<span style="background:var(--aqua); color:black; padding:4px 10px; border-radius:10px; font-weight:900; font-size:10px;">VERIFIED ASSET</span>';
-    if(p.power_mw > 4) tags.innerHTML += '<span style="border:1px solid var(--neon-green); color:var(--neon-green); padding:4px 10px; border-radius:10px; font-weight:900; font-size:10px;">HIGH POWER</span>';
-
     document.getElementById('sheet').classList.add('open');
   }
 
   function closeSheet() { document.getElementById('sheet').classList.remove('open'); }
-  
-  function toggleLayer(id) {
-    const visibility = map.getLayoutProperty(id, 'visibility');
-    map.setLayoutProperty(id, 'visibility', visibility === 'none' ? 'visible' : 'none');
-  }
 
   initMap();
 </script>
