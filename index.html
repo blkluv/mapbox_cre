@@ -1,133 +1,371 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ATL WAREHOUSE</title>
-    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
-    <style>
-        body { margin:0; padding:0; }
-        #map { position:absolute; top:0; bottom:0; width:100%; height:100%; }
-        #counter { position:fixed; top:10px; left:10px; background:black; color:#00ffea; padding:10px; z-index:1000; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATLWarehouse Grid</title>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+
+<style>
+body { margin:0; padding:0; background:#0a0a0a; font-family:Arial; }
+#map { position:absolute; top:60px; bottom:0; width:100%; }
+
+#header {
+position:fixed;
+top:0;
+width:100%;
+height:60px;
+background:linear-gradient(90deg,#00ffea,#ff00ff);
+display:flex;
+align-items:center;
+justify-content:center;
+gap:30px;
+z-index:1000;
+font-weight:bold;
+}
+
+#header a {
+color:#000;
+text-decoration:none;
+background:#fff;
+padding:6px 12px;
+border-radius:6px;
+font-size:14px;
+}
+
+#counter {
+color: black;
+background: white;
+padding: 6px 12px;
+border-radius: 6px;
+font-size: 14px;
+font-weight: bold;
+}
+
+/* Filter bar - add without breaking */
+#filter-bar {
+position: fixed;
+top: 70px;
+left: 10px;
+right: 10px;
+display: flex;
+gap: 10px;
+overflow-x: auto;
+padding: 10px;
+z-index: 999;
+}
+
+.filter-btn {
+background: rgba(0,0,0,0.8);
+backdrop-filter: blur(5px);
+border: 1px solid #ff00ff;
+border-radius: 25px;
+padding: 8px 20px;
+font-size: 13px;
+color: #ff00ff;
+cursor: pointer;
+white-space: nowrap;
+}
+
+.filter-btn.active {
+background: #ff00ff;
+color: black;
+}
+
+/* Bottom sheet - add without breaking */
+#sheet {
+position: fixed;
+left: 10px;
+right: 10px;
+bottom: 10px;
+background: rgba(10,10,10,0.95);
+backdrop-filter: blur(20px);
+border-radius: 25px;
+border: 1px solid #00ffea;
+transform: translateY(120%);
+transition: transform 0.4s;
+z-index: 2000;
+padding: 25px;
+}
+
+#sheet.open { transform: translateY(0); }
+
+#close-btn {
+position: absolute;
+top: 15px;
+right: 15px;
+background: none;
+border: none;
+color: white;
+font-size: 24px;
+cursor: pointer;
+}
+
+.stat-box {
+background: rgba(255,255,255,0.05);
+padding: 15px;
+border-radius: 12px;
+border: 1px solid rgba(255,255,255,0.1);
+}
+
+.mapboxgl-popup-content {
+background:#111 !important;
+color:#fff;
+border-radius:12px;
+}
+
+.mapboxgl-popup-content h3 {
+color:#00ffea;
+margin-bottom:8px;
+}
+</style>
 </head>
 <body>
-    <div id="counter">LOADING...</div>
-    <div id="map"></div>
+
+<div id="header">
+<a href="https://ops.ATLwarehouse.com">⚙️ OPS</a>
+<a href="https://ATLwarehouse.com">🏠 HOME</a>
+<a href="https://tiktok.com/@atlwarehouse">🎵 TIKTOK</a>
+<a href="https://TV.atlwarehouse.com">📺 TV</a>
+<span id="counter">SCANNING...</span>
+</div>
+
+<!-- Add filter bar -->
+<div id="filter-bar">
+<div class="filter-btn active" onclick="filterFacilities('all')">ALL FACILITIES</div>
+<div class="filter-btn" onclick="filterFacilities('vacant')">VACANT NOW</div>
+<div class="filter-btn" onclick="filterFacilities('verified')">VERIFIED</div>
+<div class="filter-btn" onclick="filterFacilities('ugc')">HAS UGC</div>
+</div>
+
+<div id="map"></div>
+
+<!-- Bottom Sheet -->
+<div id="sheet">
+<button id="close-btn" onclick="closeSheet()">×</button>
+<div style="display:flex; justify-content:space-between; align-items:center;">
+<div>
+<h2 id="s-name" style="margin:0; color:#00ffea;">WAREHOUSE</h2>
+<p id="s-loc" style="margin:5px 0; color:#888;">Atlanta Industrial District</p>
+</div>
+<div style="font-size:40px; font-weight:900; color:#00ffea;" id="s-grade">A</div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:20px;">
+<div class="stat-box">
+<div style="font-size:10px; color:#00ffea;">POWER CAPACITY</div>
+<div style="font-size:20px; font-weight:900;" id="s-power">4.5 MW</div>
+</div>
+<div class="stat-box">
+<div style="font-size:10px; color:#ff00ff;">DRAYAGE ZONE</div>
+<div style="font-size:20px; font-weight:900;" id="s-zone">INNER RING</div>
+</div>
+</div>
+
+<button onclick="requestInspection()" style="width:100%; margin-top:30px; padding:18px; border-radius:12px; border:none; background:linear-gradient(90deg, #00ffea, #ff00ff); color:black; font-weight:900; cursor:pointer;">
+REQUEST SITE INSPECTION
+</button>
+</div>
 
 <script>
-    // IMPORTANT: Replace with your actual token
-    mapboxgl.accessToken = "YOUR_MAPBOX_TOKEN";
-    
-    // Initialize map
-    const map = new mapboxgl.Map({
-        container: "map",
-        style: "mapbox://styles/mapbox/dark-v11",
-        center: [-84.39, 33.77], // Atlanta
-        zoom: 10
-    });
 
-    // Wait for map to load
-    map.on('load', () => {
-        console.log("Map loaded successfully");
-        document.getElementById('counter').innerText = "MAP LOADED";
-        
-        // ADD TEST MARKER - This confirms map is working
-        const el = document.createElement('div');
-        el.style.width = '20px';
-        el.style.height = '20px';
-        el.style.backgroundColor = '#00ffea';
-        el.style.borderRadius = '50%';
-        el.style.border = '2px solid white';
-        
-        new mapboxgl.Marker({ element: el })
-            .setLngLat([-84.39, 33.77]) // Atlanta
-            .setPopup(new mapboxgl.Popup().setHTML("<h3>TEST MARKER</h3><p>Map is working!</p>"))
-            .addTo(map);
-            
-        document.getElementById('counter').innerText = "TEST MARKER ADDED";
-        
-        // Now try to load real facilities
-        loadFacilities();
-    });
+mapboxgl.accessToken = "%MAPBOX_TOKEN%";
 
-    // Handle map errors
-    map.on('error', (e) => {
-        console.error("Map error:", e);
-        document.getElementById('counter').innerText = "MAP ERROR - CHECK TOKEN";
-    });
+const map = new mapboxgl.Map({
+container:"map",
+style:"mapbox://styles/mapbox/dark-v11",
+center:[-84.39,33.77],
+zoom:10
+});
 
-    async function loadFacilities() {
-        try {
-            document.getElementById('counter').innerText = "FETCHING FACILITIES...";
-            
-            // DIRECT OVERPASS API CALL (bypassing your backend for testing)
-            const query = `
-                [out:json][timeout:25];
-                (
-                    node["building"="warehouse"](33.45,-84.75,34.05,-84.05);
-                    way["building"="warehouse"](33.45,-84.75,34.05,-84.05);
-                );
-                out center;
-            `;
-            
-            const response = await fetch("https://overpass-api.de/api/interpreter", {
-                method: "POST",
-                body: query
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            console.log("Overpass data:", data);
-            
-            const elements = data.elements || [];
-            document.getElementById('counter').innerText = `FOUND ${elements.length} WAREHOUSES`;
-            
-            elements.forEach((el, index) => {
-                let coords;
-                
-                if (el.type === "node") {
-                    coords = [el.lon, el.lat];
-                } else if (el.type === "way" && el.center) {
-                    coords = [el.center.lon, el.center.lat];
-                } else {
-                    return; // Skip if no coordinates
-                }
-                
-                if (!coords || !coords[0] || !coords[1]) return;
-                
-                // Create marker
-                const markerEl = document.createElement('div');
-                markerEl.style.width = '12px';
-                markerEl.style.height = '12px';
-                markerEl.style.backgroundColor = '#ff00ff';
-                markerEl.style.borderRadius = '50%';
-                markerEl.style.border = '2px solid white';
-                markerEl.style.cursor = 'pointer';
-                
-                const marker = new mapboxgl.Marker({ element: markerEl })
-                    .setLngLat(coords)
-                    .setPopup(new mapboxgl.Popup().setHTML(`
-                        <div style="color:black; padding:10px;">
-                            <h3>${el.tags?.name || 'Warehouse ' + index}</h3>
-                            <p>Type: ${el.type}</p>
-                            <p>ID: ${el.id}</p>
-                        </div>
-                    `))
-                    .addTo(map);
-                
-                console.log(`Added marker ${index} at:`, coords);
-            });
-            
-        } catch (err) {
-            console.error("Failed to load:", err);
-            document.getElementById('counter').innerText = "ERROR: " + err.message;
-        }
-    }
+map.addControl(new mapboxgl.NavigationControl());
+
+// Store all markers for filtering
+let allMarkers = [];
+
+async function loadWarehouses() {
+
+const query = `
+[out:json][timeout:25];
+(
+  node["building"="warehouse"](33.45,-84.70,34.05,-84.10);
+  way["building"="warehouse"](33.45,-84.70,34.05,-84.10);
+);
+out center;
+`;
+
+try {
+const response = await fetch("https://overpass-api.de/api/interpreter",{
+method:"POST",
+body:query
+});
+
+const data = await response.json();
+document.getElementById('counter').innerText = `NETWORK: ${data.elements.length} UNITS`;
+
+data.elements.forEach(el => {
+
+let coords;
+
+if(el.type === "node"){
+coords = [el.lon, el.lat];
+}
+else if(el.type === "way" && el.center){
+coords = [el.center.lon, el.center.lat];
+}
+else return;
+
+const name = el.tags?.name || "Warehouse Facility";
+
+// Generate some random data for demo
+const power = (Math.random() * 5 + 1).toFixed(1);
+const grade = ['A', 'B+', 'A-'][Math.floor(Math.random() * 3)];
+const utilization = Math.floor(Math.random() * 100);
+
+// Create marker
+const markerEl = document.createElement('div');
+markerEl.style.width = '14px';
+markerEl.style.height = '14px';
+markerEl.style.backgroundColor = '#00ffea';
+markerEl.style.borderRadius = '50%';
+markerEl.style.boxShadow = '0 0 12px #00ffea';
+markerEl.style.cursor = 'pointer';
+markerEl.style.border = '2px solid black';
+
+const marker = new mapboxgl.Marker({ element: markerEl })
+.setLngLat(coords)
+.addTo(map);
+
+// Store marker data for filtering
+marker._facilityData = {
+name: name,
+power: power,
+grade: grade,
+utilization: utilization,
+coords: coords
+};
+
+// Click handler for bottom sheet
+markerEl.addEventListener('click', () => {
+openSheet({
+name: name,
+power: power,
+grade: grade,
+utilization: utilization,
+coords: coords
+});
+});
+
+// Original popup
+const popupHTML = `
+<div style="max-width:280px;">
+<h3>${name}</h3>
+<p>📦 Utilization: ${utilization}%</p>
+<p>⚡ Power: ${power} MW</p>
+<p>🏆 Grade: ${grade}</p>
+<hr style="border-color:#333;">
+<button onclick="openSheetFromPopup('${name}','${power}','${grade}','${utilization}')" style="
+width:100%;
+padding:8px;
+background:#00ffea;
+border:none;
+font-weight:bold;
+cursor:pointer;">
+Request Info
+</button>
+</div>
+`;
+
+const popup = new mapboxgl.Popup({maxWidth:"300px"}).setHTML(popupHTML);
+marker.setPopup(popup);
+
+allMarkers.push(marker);
+});
+
+} catch (err) {
+console.error("Error:", err);
+document.getElementById('counter').innerText = "OFFLINE";
+}
+}
+
+// Filter functions
+function filterFacilities(filter) {
+// Update active button
+document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+event.target.classList.add('active');
+
+allMarkers.forEach(marker => {
+const data = marker._facilityData;
+if (!data) return;
+
+switch(filter) {
+case 'all':
+marker.getElement().style.display = 'block';
+break;
+case 'vacant':
+// Show if utilization < 30%
+if (data.utilization < 30) {
+marker.getElement().style.display = 'block';
+} else {
+marker.getElement().style.display = 'none';
+}
+break;
+case 'verified':
+// Random demo - show about 30% of markers
+if (Math.random() > 0.7) {
+marker.getElement().style.display = 'block';
+} else {
+marker.getElement().style.display = 'none';
+}
+break;
+case 'ugc':
+// Random demo - show about 20% of markers
+if (Math.random() > 0.8) {
+marker.getElement().style.display = 'block';
+} else {
+marker.getElement().style.display = 'none';
+}
+break;
+}
+});
+}
+
+// Sheet functions
+function openSheet(data) {
+document.getElementById('s-name').innerText = data.name;
+document.getElementById('s-grade').innerText = data.grade;
+document.getElementById('s-power').innerText = data.power + " MW";
+document.getElementById('s-zone').innerText = data.utilization > 70 ? "HIGH TRAFFIC" : "NORMAL";
+document.getElementById('sheet').classList.add('open');
+}
+
+function closeSheet() {
+document.getElementById('sheet').classList.remove('open');
+}
+
+// Called from popup button
+window.openSheetFromPopup = function(name, power, grade, utilization) {
+openSheet({name, power, grade, utilization});
+closePopup();
+}
+
+function closePopup() {
+// Close any open popup
+const popup = document.querySelector('.mapboxgl-popup');
+if (popup) popup.remove();
+}
+
+function requestInspection() {
+alert('Inspection requested - community notified');
+closeSheet();
+}
+
+// Load warehouses when map is ready
+map.on('load', loadWarehouses);
+
 </script>
+
 </body>
 </html>
