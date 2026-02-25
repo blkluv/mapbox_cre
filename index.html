@@ -10,402 +10,311 @@
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
     <style>
+        /* EXACT STYLES FROM YOUR SCREENSHOT */
         :root {
             --aqua: #00ffea;
             --pink: #ff00ff;
-            --neon-blue: #4d4dff;
             --glass: rgba(10, 10, 10, 0.95);
             --border: rgba(255, 255, 255, 0.1);
-            --success: #00ff88;
-            --warning: #ffaa00;
-            --danger: #ff4d4d;
         }
 
         body { margin:0; padding:0; background:#0a0a0a; font-family: 'Inter', sans-serif; color: white; overflow: hidden; }
-        #map { position:absolute; top:0; bottom:0; width:100%; }
+        #map { position:absolute; top:0; bottom:0; width:100%; height:100%; }
 
-        /* Futuristic Header */
+        /* Header exactly as screenshot */
         #header {
             position: fixed; top: 10px; left: 10px; right: 10px; height: 60px;
             background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
             border: 1px solid var(--aqua); border-radius: 30px;
-            display: flex; align-items: center; padding: 0 20px;
-            z-index: 1000; box-shadow: 0 0 20px rgba(0,255,234,0.3);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; z-index: 1000;
+            box-shadow: 0 0 20px rgba(0,255,234,0.3);
         }
 
-        #header-left { display: flex; gap: 10px; flex: 1; }
-        #header-right { display: flex; gap: 15px; align-items: center; }
+        .header-left { display: flex; gap: 15px; }
+        .header-right { display: flex; gap: 15px; align-items: center; }
 
         .header-btn {
             background: transparent; border: 1px solid var(--aqua);
-            color: var(--aqua); padding: 8px 16px; border-radius: 20px;
-            font-size: 12px; font-weight: bold; cursor: pointer;
+            color: var(--aqua); padding: 8px 20px; border-radius: 25px;
+            font-size: 13px; font-weight: 600; cursor: pointer;
             text-decoration: none; transition: all 0.3s;
+            white-space: nowrap;
         }
-        .header-btn:hover { background: var(--aqua); color: black; box-shadow: 0 0 15px var(--aqua); }
+        .header-btn:hover { background: var(--aqua); color: black; }
 
         #counter {
             background: linear-gradient(90deg, var(--aqua), var(--pink));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             font-size: 14px; font-weight: 900;
+            margin-right: 15px;
         }
 
-        /* AR Filter Bar */
-        #ar-bar {
+        /* Filter bar exactly as screenshot */
+        #filter-bar {
             position: fixed; top: 80px; left: 10px; right: 10px;
             display: flex; gap: 10px; overflow-x: auto; padding: 10px;
             z-index: 999; scrollbar-width: none;
         }
-        .ar-filter {
+        .filter-btn {
             background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
             border: 1px solid var(--pink); border-radius: 25px;
-            padding: 8px 20px; font-size: 14px; white-space: nowrap;
-            color: var(--pink); cursor: pointer; transition: all 0.3s;
+            padding: 8px 20px; font-size: 13px; white-space: nowrap;
+            color: var(--pink); cursor: pointer;
             box-shadow: 0 0 10px rgba(255,0,255,0.3);
         }
-        .ar-filter.active { background: var(--pink); color: black; font-weight: bold; }
+        .filter-btn.active { background: var(--pink); color: black; font-weight: bold; }
 
-        /* Bottom Sheet */
+        /* Bottom sheet */
         #sheet {
             position: fixed; left: 10px; right: 10px; bottom: 10px;
             background: var(--glass); backdrop-filter: blur(20px);
             border-radius: 25px; border: 1px solid var(--aqua);
-            transform: translateY(120%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translateY(120%); transition: transform 0.4s;
             z-index: 2000; padding: 25px;
-            box-shadow: 0 0 30px rgba(0,255,234,0.3);
         }
         #sheet.open { transform: translateY(0); }
         
         #close-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
 
-        /* Live Stats */
-        .live-stat {
-            display: flex; align-items: center; gap: 8px;
-            background: rgba(255,255,255,0.05); padding: 5px 12px;
-            border-radius: 20px; border: 1px solid var(--border);
-            font-size: 12px;
-        }
-        .pulse { width: 8px; height: 8px; border-radius: 50%; animation: pulse 1.5s infinite; }
-        .pulse.green { background: var(--success); box-shadow: 0 0 10px var(--success); }
-        .pulse.red { background: var(--danger); box-shadow: 0 0 10px var(--danger); }
-        .pulse.yellow { background: var(--warning); box-shadow: 0 0 10px var(--warning); }
-
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-
-        /* TikTok UGC Feed */
-        #ugc-feed {
-            position: fixed; right: 10px; top: 150px; width: 80px;
-            display: flex; flex-direction: column; gap: 10px;
-            z-index: 1500;
-        }
-        .ugc-thumb {
-            width: 70px; height: 120px; border-radius: 15px;
-            border: 2px solid var(--pink); overflow: hidden;
-            cursor: pointer; position: relative;
-            box-shadow: 0 0 15px rgba(255,0,255,0.3);
-        }
-        .ugc-thumb video { width: 100%; height: 100%; object-fit: cover; }
-        .ugc-thumb::after {
-            content: '▶'; position: absolute; bottom: 5px; right: 5px;
-            background: var(--pink); color: black; width: 20px; height: 20px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 12px;
-        }
-
-        /* Telegram Widget */
-        #telegram-bar {
-            position: fixed; bottom: 20px; left: 20px;
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
-            border: 1px solid #0088cc; border-radius: 40px;
-            padding: 8px 20px; display: flex; align-items: center; gap: 10px;
-            z-index: 1600; cursor: pointer;
-        }
-        #telegram-bar img { width: 24px; height: 24px; }
-
-        /* Grade Badge */
-        .grade-badge { 
-            font-size: 48px; font-weight: 900; 
-            background: linear-gradient(135deg, var(--aqua), var(--pink));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
+        .stat-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
+        .grade-badge { font-size: 40px; font-weight: 900; color: var(--aqua); text-shadow: 0 0 10px var(--aqua); }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
+    <!-- Header with exact screenshot layout -->
     <div id="header">
-        <div id="header-left">
-            <a href="#" class="header-btn" onclick="openAR('vacancy')">🔍 VACANCY SCAN</a>
-            <a href="#" class="header-btn" onclick="openAR('utilization')">📊 UTILIZATION</a>
-            <a href="#" class="header-btn" onclick="openAR('traffic')">🚚 DRAYAGE</a>
+        <div class="header-left">
+            <a href="#" class="header-btn" onclick="openAR('vacancy')">VACANCY SCAN</a>
+            <a href="#" class="header-btn" onclick="openAR('utilization')">UTILIZATION</a>
+            <a href="#" class="header-btn" onclick="openAR('drayage')">DRAYAGE</a>
         </div>
-        <div id="header-right">
+        <div class="header-right">
             <span id="counter">SCANNING NETWORK...</span>
-            <a href="#" class="header-btn" onclick="openUGCUpload()">📱 UPLOAD TIKTOK</a>
+            <a href="#" class="header-btn" onclick="openUGCUpload()">UPLOAD TIKTOK</a>
         </div>
     </div>
 
-    <!-- AR Filter Bar -->
-    <div id="ar-bar">
-        <div class="ar-filter active" onclick="applyARFilter('all')">🌐 ALL FACILITIES</div>
-        <div class="ar-filter" onclick="applyARFilter('vacant')">🟢 VACANT NOW</div>
-        <div class="ar-filter" onclick="applyARFilter('highTraffic')">🔴 HIGH TRAFFIC</div>
-        <div class="ar-filter" onclick="applyARFilter('verified')">✅ VERIFIED</div>
-        <div class="ar-filter" onclick="applyARFilter('ugc')">🎥 HAS UGC</div>
+    <!-- Filter bar exactly as screenshot -->
+    <div id="filter-bar">
+        <div class="filter-btn active" onclick="applyFilter('all')">ALL FACILITIES</div>
+        <div class="filter-btn" onclick="applyFilter('vacant')">VACANT NOW</div>
+        <div class="filter-btn" onclick="applyFilter('traffic')">HIGH TRAFFIC</div>
+        <div class="filter-btn" onclick="applyFilter('verified')">VERIFIED</div>
+        <div class="filter-btn" onclick="applyFilter('ugc')">HAS UGC</div>
     </div>
 
-    <!-- Map Container -->
+    <!-- Map -->
     <div id="map"></div>
-
-    <!-- TikTok UGC Feed -->
-    <div id="ugc-feed" id="ugcFeed"></div>
-
-    <!-- Telegram Widget -->
-    <div id="telegram-bar" onclick="window.open('https://t.me/atlwarehouse', '_blank')">
-        <img src="https://telegram.org/img/website_icon.svg" alt="Telegram"/>
-        <span>ATL Warehouse Community <span style="color: #0088cc;">● 2.3k online</span></span>
-    </div>
 
     <!-- Bottom Sheet -->
     <div id="sheet">
         <button id="close-btn" onclick="closeSheet()">×</button>
-        
-        <!-- Header with AI Score -->
-        <div style="display:flex; justify-content:space-between; align-items:start;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
                 <h2 id="s-name" style="margin:0; color:var(--aqua);">WAREHOUSE</h2>
                 <p id="s-loc" style="margin:5px 0; color:#888;">Atlanta Industrial District</p>
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <span class="live-stat"><span class="pulse green"></span> LIVE: AI SCANNING</span>
-                </div>
             </div>
-            <div class="grade-badge" id="s-grade">A+</div>
+            <div class="grade-badge" id="s-grade">A</div>
         </div>
 
-        <!-- Real-time Intelligence Grid -->
-        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin:20px 0;">
-            <div class="stat-box" style="background: rgba(0,255,234,0.1); border:1px solid var(--aqua);">
-                <div style="font-size:10px; color:var(--aqua);">UTILIZATION</div>
-                <div style="font-size:18px; font-weight:900;" id="s-utilization">87%</div>
-                <div style="font-size:10px; color:#888;">AI Confidence</div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:20px;">
+            <div class="stat-box">
+                <div style="font-size:10px; color:var(--aqua);">POWER CAPACITY</div>
+                <div style="font-size:20px; font-weight:900;" id="s-power">4.5 MW</div>
             </div>
-            <div class="stat-box" style="background: rgba(255,0,255,0.1); border:1px solid var(--pink);">
+            <div class="stat-box">
                 <div style="font-size:10px; color:var(--pink);">DRAYAGE ZONE</div>
-                <div style="font-size:18px; font-weight:900;" id="s-zone">INNER RING</div>
-                <div style="font-size:10px; color:#888;">Live Traffic</div>
-            </div>
-            <div class="stat-box" style="background: rgba(255,255,255,0.05);">
-                <div style="font-size:10px; color:white;">VERIFICATION</div>
-                <div style="font-size:18px; font-weight:900;" id="s-verified">CLAIMED</div>
-                <div style="font-size:10px; color:#888;">by 3 operators</div>
+                <div style="font-size:20px; font-weight:900;" id="s-zone">INNER RING</div>
             </div>
         </div>
 
-        <!-- Pain Point Solutions -->
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
-            <div style="background: rgba(255,0,0,0.1); border:1px solid var(--danger); padding:12px; border-radius:12px;">
-                <div style="color:var(--danger); font-size:12px;">⚠️ PAIN POINT</div>
-                <div id="s-painpoint" style="font-size:14px;">Hidden vacancy data</div>
-                <div id="s-solution" style="font-size:12px; color:var(--aqua);">✓ AI satellite detection shows 40% vacant</div>
-            </div>
-            <div style="background: rgba(0,255,0,0.1); border:1px solid var(--success); padding:12px; border-radius:12px;">
-                <div style="color:var(--success); font-size:12px;">🎯 UGC INSIGHT</div>
-                <div id="s-ugc-count" style="font-size:14px;">3 TikTok clips</div>
-                <div id="s-ugc-preview" style="font-size:12px; color:var(--pink);">▶ Watch latest</div>
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
-            <button onclick="requestInspection()" style="padding:15px; border-radius:12px; border:none; background:linear-gradient(90deg, var(--aqua), var(--pink)); color:black; font-weight:900; cursor:pointer;">
-                🚀 REQUEST AI INSPECTION
-            </button>
-            <button onclick="shareTelegram()" style="padding:15px; border-radius:12px; border:1px solid #0088cc; background:transparent; color:#0088cc; font-weight:900; cursor:pointer;">
-                📱 SHARE
-            </button>
-        </div>
+        <button onclick="requestInspection()" style="width:100%; margin-top:30px; padding:18px; border-radius:12px; border:none; background:linear-gradient(90deg, var(--aqua), var(--pink)); color:black; font-weight:900; cursor:pointer;">
+            REQUEST SITE INSPECTION
+        </button>
     </div>
 
 <script>
-    mapboxgl.accessToken = "YOUR_MAPBOX_TOKEN";
-
+    // IMPORTANT: Use environment variable
+    mapboxgl.accessToken = "YOUR_MAPBOX_TOKEN"; // Replace or use from Vercel env
+    
     const map = new mapboxgl.Map({
         container: "map",
         style: "mapbox://styles/mapbox/dark-v11",
-        center: [-84.39, 33.77],
-        zoom: 11,
-        pitch: 50
+        center: [-84.39, 33.77], // Atlanta
+        zoom: 10,
+        pitch: 45
     });
 
-    // Real-time data store
-    let facilities = [];
-    let ugcClips = [];
+    // Store all markers
+    let markers = [];
 
-    // Pain point database - solving industry problems
-    const painPointSolutions = {
-        'vacancy': 'Traditional platforms show 30% vacancy, but AI satellite + truck telemetry shows 52% actual vacancy',
-        'utilization': 'Public records claim 95% utilization, but dock sensor data shows only 68% active',
-        'traffic': 'Reported 15min drayage, but real GPS shows 45min congestion',
-        'verification': 'Brokers claim space, but 0 verified inspections in last 30 days'
-    };
-
-    // Load facilities from your API
+    // Load from your API endpoint
     async function loadFacilities() {
         try {
-            const response = await fetch('/api/facilities');
-            const data = await response.json();
+            document.getElementById('counter').innerText = "SCANNING NETWORK...";
             
-            facilities = data.features;
-            document.getElementById('counter').innerText = `NETWORK: ${facilities.length} UNITS`;
-
+            // CALL YOUR API - THIS IS THE FIX
+            const response = await fetch('/api/facilities');
+            
+            if (!response.ok) {
+                throw new Error(`API returned ${response.status}`);
+            }
+            
+            const geojson = await response.json();
+            
+            if (!geojson.features || geojson.features.length === 0) {
+                console.warn("No facilities returned from API");
+                document.getElementById('counter').innerText = "NO FACILITIES FOUND";
+                return;
+            }
+            
+            // Update counter
+            document.getElementById('counter').innerText = `NETWORK: ${geojson.features.length} UNITS`;
+            
             // Clear existing markers
-            document.querySelectorAll('.custom-marker').forEach(m => m.remove());
-
-            facilities.forEach(f => {
-                const coords = f.geometry.coordinates;
-                const props = f.properties;
+            markers.forEach(m => m.remove());
+            markers = [];
+            
+            // Add markers for each facility
+            geojson.features.forEach(feature => {
+                const coords = feature.geometry.coordinates;
+                const props = feature.properties;
                 
-                // Determine marker color based on real-time status
-                const utilization = props.utilization || Math.random() * 100;
-                const markerColor = utilization > 80 ? '#ff00ff' : (utilization > 50 ? '#00ffea' : '#ffaa00');
+                // Skip invalid coordinates
+                if (!coords || coords.length < 2 || !coords[0] || !coords[1]) return;
                 
+                // Create marker element
                 const el = document.createElement('div');
                 el.className = 'custom-marker';
-                el.style.width = '16px';
-                el.style.height = '16px';
-                el.style.backgroundColor = markerColor;
+                el.style.width = '14px';
+                el.style.height = '14px';
+                el.style.backgroundColor = props.verification_status === 'verified' ? '#00ffea' : '#ff00ff';
                 el.style.borderRadius = '50%';
-                el.style.boxShadow = `0 0 15px ${markerColor}`;
+                el.style.boxShadow = props.verification_status === 'verified' ? '0 0 12px #00ffea' : '0 0 12px #ff00ff';
                 el.style.cursor = 'pointer';
-                el.style.border = '2px solid white';
-                el.dataset.id = props.id;
-
-                new mapboxgl.Marker({ element: el })
+                el.style.border = '2px solid black';
+                
+                // Create popup with basic info
+                const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+                    <div style="color:black; padding:5px;">
+                        <strong>${props.name || 'Warehouse'}</strong><br>
+                        <span style="color:#666;">${props.utilization ? props.utilization + '% utilized' : 'Status unknown'}</span>
+                    </div>
+                `);
+                
+                // Add marker to map
+                const marker = new mapboxgl.Marker({ element: el })
                     .setLngLat(coords)
+                    .setPopup(popup)
                     .addTo(map);
-
-                el.addEventListener('click', () => openSheet(props));
+                
+                markers.push(marker);
+                
+                // Open sheet on click
+                el.addEventListener('click', () => {
+                    openSheet(props);
+                });
             });
-
-            // Load UGC content
-            loadUGCContent();
+            
+            // If we have facilities, fit bounds to show them all
+            if (geojson.features.length > 0) {
+                const bounds = new mapboxgl.LngLatBounds();
+                geojson.features.forEach(f => {
+                    bounds.extend(f.geometry.coordinates);
+                });
+                map.fitBounds(bounds, { padding: 50 });
+            }
             
         } catch (err) {
-            console.error("Failed to load:", err);
-            document.getElementById('counter').innerText = "OFFLINE - USING CACHE";
+            console.error("Failed to load facilities:", err);
+            document.getElementById('counter').innerText = "OFFLINE - CHECK API";
+            
+            // FALLBACK: Show some sample data for demonstration
+            showFallbackData();
         }
     }
 
-    // UGC Feed from TikTok/Telegram
-    function loadUGCContent() {
-        // Simulate UGC content - in production, fetch from your API that connects to TikTok/Telegram
-        ugcClips = [
-            { id: 1, facility: 'warehouse-123', thumbnail: 'https://via.placeholder.com/70x120/ff00ff/ffffff?text=UGC1' },
-            { id: 2, facility: 'warehouse-456', thumbnail: 'https://via.placeholder.com/70x120/00ffea/000000?text=UGC2' },
-            { id: 3, facility: 'warehouse-789', thumbnail: 'https://via.placeholder.com/70x120/ffaa00/000000?text=UGC3' }
+    // Fallback data if API fails (for testing)
+    function showFallbackData() {
+        const sampleFacilities = [
+            { name: "ATL Logistics Center", coords: [-84.39, 33.77], grade: "A+" },
+            { name: "Fulton Industrial", coords: [-84.42, 33.75], grade: "B+" },
+            { name: "South Atlanta DC", coords: [-84.36, 33.69], grade: "A" },
+            { name: "Airport Warehouse", coords: [-84.44, 33.64], grade: "A-" }
         ];
-
-        const feed = document.getElementById('ugc-feed');
-        feed.innerHTML = ugcClips.map(clip => `
-            <div class="ugc-thumb" onclick="playUGC('${clip.facility}')">
-                <img src="${clip.thumbnail}" style="width:100%; height:100%; object-fit:cover;">
-            </div>
-        `).join('');
-    }
-
-    // AR Filter Effects
-    function applyARFilter(filter) {
-        document.querySelectorAll('.ar-filter').forEach(f => f.classList.remove('active'));
-        event.target.classList.add('active');
-
-        // Apply visual filter to markers
-        document.querySelectorAll('.custom-marker').forEach(marker => {
-            const id = marker.dataset.id;
-            const facility = facilities.find(f => f.properties.id === id);
+        
+        document.getElementById('counter').innerText = `NETWORK: ${sampleFacilities.length} UNITS (DEMO)`;
+        
+        sampleFacilities.forEach(f => {
+            const el = document.createElement('div');
+            el.style.width = '14px';
+            el.style.height = '14px';
+            el.style.backgroundColor = '#00ffea';
+            el.style.borderRadius = '50%';
+            el.style.boxShadow = '0 0 12px #00ffea';
+            el.style.cursor = 'pointer';
+            el.style.border = '2px solid black';
             
-            if (!facility) return;
-
-            switch(filter) {
-                case 'vacant':
-                    const visible = facility.properties.utilization < 40;
-                    marker.style.display = visible ? 'block' : 'none';
-                    break;
-                case 'highTraffic':
-                    marker.style.display = 'block'; // In real app, filter by traffic data
-                    break;
-                default:
-                    marker.style.display = 'block';
-            }
+            new mapboxgl.Marker({ element: el })
+                .setLngLat(f.coords)
+                .addTo(map);
+            
+            el.addEventListener('click', () => {
+                openSheet({
+                    name: f.name,
+                    grade: f.grade,
+                    power: (Math.random() * 5 + 1).toFixed(1),
+                    verification_status: "verified"
+                });
+            });
         });
     }
 
-    // Open sheet with revolutionary data
-    function openSheet(props) {
-        document.getElementById('s-name').innerText = props.name || "Industrial Facility";
-        document.getElementById('s-loc').innerText = `${props.city || 'Atlanta'}, ${props.state || 'GA'}`;
-        document.getElementById('s-grade').innerText = props.grade || 'A';
-        document.getElementById('s-utilization').innerText = (props.utilization || Math.random() * 100).toFixed(0) + '%';
-        document.getElementById('s-zone').innerText = props.drayage_zone || 'INNER RING';
-        document.getElementById('s-verified').innerHTML = props.verification_status === 'verified' ? '✅ VERIFIED' : '⚠️ UNVERIFIED';
-        
-        // Show industry pain point solution
-        const painPoint = Object.keys(painPointSolutions)[Math.floor(Math.random() * 4)];
-        document.getElementById('s-painpoint').innerText = painPointSolutions[painPoint].split('but')[0];
-        document.getElementById('s-solution').innerHTML = '✓ ' + painPointSolutions[painPoint].split('but')[1];
-        
-        // UGC count
-        const facilityUGC = ugcClips.filter(c => c.facility.includes(props.id?.split('-')[1]));
-        document.getElementById('s-ugc-count').innerText = facilityUGC.length + ' TikTok clips';
-        
+    function openSheet(data) {
+        document.getElementById('s-name').innerText = data.name || "Industrial Facility";
+        document.getElementById('s-grade').innerText = data.grade || "A";
+        document.getElementById('s-power').innerText = (data.power_mw || data.power || (Math.random() * 5).toFixed(1)) + " MW";
+        document.getElementById('s-zone').innerText = data.drayage_zone || "INNER RING";
         document.getElementById('sheet').classList.add('open');
-    }
-
-    // Open AR camera view
-    function openAR(type) {
-        // In production, this would open the camera with AR overlay
-        alert(`📱 Opening AR view for ${type} detection...
-        
-This would show:
-- Live vacancy detection via AI
-- Truck traffic heatmap overlay
-- Loading dock utilization in AR
-- Real-time drayage times`);
-    }
-
-    // Play UGC video
-    function playUGC(facilityId) {
-        alert(`🎥 Playing TikTok videos for ${facilityId}
-        
-Features:
-- Driver POV of loading docks
-- Real queue times
-- Facility conditions
-- Verified by @atlwarehouse community`);
-    }
-
-    // Share to Telegram
-    function shareTelegram() {
-        const name = document.getElementById('s-name').innerText;
-        const url = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(`Check out ${name} real-time data on ATL Warehouse!`)}`;
-        window.open(url, '_blank');
-    }
-
-    function requestInspection() {
-        alert(`🚀 AI Inspection Requested
-
-What happens next:
-1. Drone feed activated
-2. AI analyzes loading activity
-3. Truck telemetry cross-referenced
-4. Telegram community notified
-5. 15min delivery to your phone`);
     }
 
     function closeSheet() {
         document.getElementById('sheet').classList.remove('open');
     }
 
-    map.on('load', loadFacilities);
+    function applyFilter(filter) {
+        document.querySelectorAll('.filter-btn').forEach(f => f.classList.remove('active'));
+        event.target.classList.add('active');
+        
+        // Filter logic here
+        console.log(`Filtering: ${filter}`);
+    }
+
+    function openAR(type) {
+        alert(`📱 Opening AR ${type} view - coming soon!`);
+    }
+
+    function openUGCUpload() {
+        window.open('https://tiktok.com/@atlwarehouse', '_blank');
+    }
+
+    function requestInspection() {
+        alert('Inspection requested - community will verify');
+    }
+
+    // Wait for map to load then get facilities
+    map.on('load', () => {
+        console.log("Map loaded, fetching facilities...");
+        loadFacilities();
+    });
+
+    // Add error handling
+    map.on('error', (e) => {
+        console.error("Map error:", e);
+    });
+
 </script>
 </body>
 </html>
