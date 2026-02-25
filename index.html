@@ -2,295 +2,227 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ATLWarehouse Grid</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>ATL WAREHOUSE | COMMAND CENTER</title>
 
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
 
   <style>
-    :root{
-      --bg:#0a0a0a;
-      --card:rgba(12,12,12,.92);
-      --stroke:rgba(255,255,255,.10);
-      --text:#fff;
-      --muted:#b8b8b8;
-      --aqua:#00ffea;
-      --pink:#ff00ff;
-      --gold:#ffd000;
-      --inspected:#ff7cff;
-      --shadow: 0 18px 60px rgba(0,0,0,.55);
-      --radius: 16px;
+    :root {
+      --aqua: #00f2ff;
+      --pink: #ff007f;
+      --neon-green: #39ff14;
+      --glass: rgba(15, 15, 15, 0.85);
+      --border: rgba(255, 255, 255, 0.1);
     }
 
-    body{ margin:0; padding:0; background:var(--bg); font-family: Arial, sans-serif; overflow: hidden; }
-    #map{ position:absolute; top:64px; bottom:0; width:100%; z-index: 1; }
+    body { margin:0; padding:0; background:#050505; font-family: 'Inter', sans-serif; color: white; overflow: hidden; }
+    #map { position:absolute; top:0; bottom:0; width:100%; filter: saturate(1.2) brightness(0.8); }
 
-    /* Header */
-    #header{
-      position:fixed; top:0; left:0; right:0; height:64px;
-      background: linear-gradient(90deg, var(--aqua), var(--pink));
-      display:flex; align-items:center; justify-content:center; gap:10px;
-      padding:0 10px; z-index:4000; flex-wrap:wrap;
-    }
-    #header a{
-      display:flex; align-items:center; gap:8px;
-      color:#000; text-decoration:none; background:#fff;
-      padding:8px 12px; border-radius: 12px;
-      font-weight:900; font-size:14px;
-      box-shadow: 0 10px 28px rgba(0,0,0,.22);
-      white-space:nowrap;
+    /* Neon Overlay Effect */
+    #map::after {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      box-shadow: inset 0 0 150px rgba(0,0,0,0.5); pointer-events: none; z-index: 2;
     }
 
-    /* Top Control Bar - Fixed for clickability */
-    #controls{
-      position:absolute; top:74px; left:10px; right:10px;
-      z-index:3000; display:flex; gap:10px; flex-wrap:wrap;
-      align-items:center; justify-content:space-between;
-      pointer-events: none; /* Map clicks pass through the gaps */
+    /* TikTok Friendly Header */
+    #header {
+      position: fixed; top: 20px; left: 20px; right: 20px;
+      display: flex; justify-content: space-between; align-items: center;
+      z-index: 1000;
     }
 
-    .control-card{
-      background: var(--card); border: 1px solid var(--stroke);
-      border-radius: var(--radius); box-shadow: var(--shadow);
-      padding:10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;
-      max-width: 100%; pointer-events: auto; /* Buttons are clickable */
+    .brand {
+      background: var(--glass); backdrop-filter: blur(10px);
+      padding: 12px 20px; border-radius: 40px; border: 1px solid var(--border);
+      font-weight: 900; letter-spacing: 2px; font-size: 14px; color: var(--aqua);
+      box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
     }
 
-    .chip{
-      border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.07);
-      color: var(--text); padding:10px 12px; border-radius: 999px;
-      font-weight:900; font-size:13px; cursor:pointer; user-select:none;
-      display:flex; align-items:center; gap:8px;
+    .stats-pill {
+      background: var(--pink); color: white; padding: 8px 16px; 
+      border-radius: 40px; font-weight: 900; font-size: 12px;
+      animation: pulse-red 2s infinite;
     }
-    .chip.active{ background: rgba(0,255,234,.18); border-color: rgba(0,255,234,.45); color: var(--aqua); }
 
-    .segmented{ display:flex; gap:0; overflow:hidden; border-radius: 999px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); }
-    .segmented button{ border:none; background:transparent; color: var(--text); padding:10px 12px; font-weight:900; font-size:13px; cursor:pointer; }
-    .segmented button.active{ background: rgba(255,0,255,.18); color:#fff; }
-
-    .btn{ border:none; cursor:pointer; border-radius: 12px; padding:10px 12px; font-weight:900; background: var(--aqua); color:#000; }
-    .btn.secondary{ background: rgba(255,255,255,.08); color:#fff; border:1px solid rgba(255,255,255,.12); }
-
-    /* Bottom Sheet */
-    #sheet{
-      position:fixed; left:0; right:0; bottom:0; height: 72%; max-height: 600px;
-      background: rgba(10,10,10,.98); border-top: 1px solid rgba(255,255,255,.10);
-      border-top-left-radius: 22px; border-top-right-radius: 22px;
-      box-shadow: 0 -18px 80px rgba(0,0,0,.70); transform: translateY(110%);
-      transition: transform .22s ease; z-index: 5000; display:flex; flex-direction:column;
+    /* Floating Action Dock */
+    #dock {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 15px; z-index: 1000; padding: 10px;
+      background: var(--glass); backdrop-filter: blur(20px);
+      border-radius: 100px; border: 1px solid var(--border);
     }
-    #sheet.open{ transform: translateY(0); }
 
-    #sheet-handle{ height: 44px; display:flex; align-items:center; justify-content:center; position:relative; cursor:grab; }
-    #sheet-handle:before{ content:""; width: 56px; height: 6px; background: rgba(255,255,255,.18); border-radius: 999px; }
-    #sheet-close{ position:absolute; right:14px; top:10px; width:34px; height:34px; border-radius: 12px; border:1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color:#fff; font-weight:900; cursor:pointer; }
+    .dock-btn {
+      width: 50px; height: 50px; border-radius: 50%; border: none;
+      background: rgba(255,255,255,0.05); color: white; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
 
-    #sheet-content{ padding: 0 14px 14px; overflow:auto; }
+    .dock-btn:hover { transform: scale(1.2); background: var(--aqua); color: black; }
 
-    .title-row{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,.10); margin-bottom: 12px; }
-    .facility-title{ margin:0; font-size:18px; font-weight:900; color: var(--aqua); line-height:1.15; }
-    .badges{ display:flex; gap:8px; flex-wrap:wrap; }
-    .badge{ display:inline-flex; align-items:center; gap:6px; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,.14); font-size: 12px; font-weight: 900; color:#fff; background: rgba(255,255,255,.06); white-space:nowrap; }
-    .badge.verified{ background: rgba(255,208,0,.16); border-color: rgba(255,208,0,.35); }
+    /* Bottom Sheet - Mobile First */
+    #sheet {
+      position: fixed; left: 0; right: 0; bottom: 0; height: 65vh;
+      background: #0a0a0a; border-radius: 30px 30px 0 0;
+      transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 2000; padding: 30px; border-top: 1px solid var(--aqua);
+    }
 
-    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom: 12px; }
-    .stat{ background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding:10px; }
-    .stat .k{ font-size:12px; color: var(--muted); font-weight:800; }
-    .stat .v{ font-size:15px; color:#fff; font-weight:900; margin-top:4px; }
+    #sheet.open { transform: translateY(0); }
 
-    .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom: 10px; }
-    .tab{ padding:10px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color:#fff; font-weight:900; font-size:13px; cursor:pointer; }
-    .tab.active{ background: rgba(0,255,234,.18); border-color: rgba(0,255,234,.45); color: var(--aqua); }
-    .tab-panel{ display:none; }
-    .tab-panel.active{ display:block; }
+    .grade-badge {
+      font-size: 48px; font-weight: 900; color: var(--aqua);
+      text-shadow: 0 0 20px rgba(0,242,255,0.5);
+    }
 
-    .kv{ margin: 8px 0; color:#ddd; font-size:13px; line-height:1.35; }
-    .kv strong{ color:#fff; }
+    @keyframes pulse-red {
+      0% { box-shadow: 0 0 0 0 rgba(255, 0, 127, 0.7); }
+      70% { box-shadow: 0 0 0 15px rgba(255, 0, 127, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 0, 127, 0); }
+    }
 
-    .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top: 12px; }
-    .action{ flex:1; border:none; cursor:pointer; border-radius: 14px; padding: 12px 12px; font-weight: 900; background: var(--aqua); color:#000; }
-    .action.secondary{ background: rgba(255,255,255,.08); color:#fff; border: 1px solid rgba(255,255,255,.12); }
+    /* Scanning Line for TikTok Video */
+    .scanline {
+      width: 100%; height: 2px; background: var(--aqua);
+      position: fixed; top: 0; left: 0; z-index: 3000;
+      opacity: 0.3; pointer-events: none;
+      animation: scan 4s linear infinite;
+    }
 
-    .compare-tag { background: var(--pink); color: white; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 900; position: fixed; top: 140px; left: 50%; transform: translateX(-50%); z-index: 6000; display: none; }
-
-    @media (max-width: 420px){ .grid{ grid-template-columns: 1fr; } #controls{ top:72px; } }
-    .mapboxgl-popup{ display:none !important; }
+    @keyframes scan {
+      0% { top: 0; }
+      100% { top: 100%; }
+    }
   </style>
 </head>
 <body>
 
-  <div id="compare-notice" class="compare-tag">Benchmarking: Select another facility</div>
+  <div class="scanline"></div>
 
   <div id="header">
-    <a href="https://ops.atlwarehouse.com">⚙️ OPS</a>
-    <a href="https://atlwarehouse.com">🏠 HOME</a>
-    <a href="https://tiktok.com/@atlwarehouse">🎵 TIKTOK</a>
-    <a href="https://tv.atlwarehouse.com">📺 TV</a>
-  </div>
-
-  <div id="controls">
-    <div class="control-card">
-      <div id="chip-verified" class="chip">✅ Verified</div>
-      <div id="chip-capacity" class="chip">📊 Capacity &lt; 75%</div>
-
-      <div class="segmented">
-        <button id="heat-labor" class="active">👷 Labor</button>
-        <button id="heat-util">📦 Util</button>
-        <button id="heat-verified">🏷 Verified</button>
-      </div>
-
-      <button id="btn-submarkets" class="btn secondary">🗺 Submarkets</button>
-      <button id="btn-heat" class="btn secondary">🔥 Heat</button>
-    </div>
-
-    <div class="control-card">
-      <button id="btn-atl" class="btn">📍 Atlanta</button>
-      <button id="btn-fit" class="btn secondary">🧭 Fit</button>
-      <button id="btn-list" class="btn secondary">🏆 List</button>
-    </div>
+    <div class="brand">ATL WAREHOUSE // OPS</div>
+    <div class="stats-pill">LIVE NETWORK: 482 UNITS</div>
   </div>
 
   <div id="map"></div>
 
-  <div id="sheet" aria-hidden="true">
-    <div id="sheet-handle"><button id="sheet-close">×</button></div>
-    <div id="sheet-content">
-      <div class="title-row">
+  <div id="dock">
+    <button class="dock-btn" title="Heatmap">🔥</button>
+    <button class="dock-btn" title="Labor">👷</button>
+    <button class="dock-btn" style="background: var(--aqua); color:black;" title="Add Warehouse">+</button>
+    <button class="dock-btn" title="Verification">✅</button>
+    <button class="dock-btn" title="Satellite">🛰️</button>
+  </div>
+
+  <div id="sheet">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
         <div>
-          <h2 id="sheet-title" class="facility-title">Facility</h2>
-          <div id="sheet-subtitle" class="kv">Atlanta Industrial</div>
+            <h1 id="sheet-title" style="margin:0; font-size:24px; color:var(--aqua);">CENTRAL HUB A1</h1>
+            <p id="sheet-location" style="color:#888;">South Fulton, Atlanta, GA</p>
         </div>
-        <div id="sheet-badges" class="badges"></div>
-      </div>
-
-      <div class="grid" id="sheet-stats"></div>
-
-      <div class="tabs">
-        <button class="tab active" data-tab="overview">Overview</button>
-        <button class="tab" data-tab="ops">Ops</button>
-        <button class="tab" data-tab="labor">Labor</button>
-      </div>
-
-      <div id="tab-overview" class="tab-panel active"></div>
-      <div id="tab-ops" class="tab-panel"></div>
-      <div id="tab-labor" class="tab-panel"></div>
-
-      <div class="actions">
-        <button id="btn-request" class="action">Request Info</button>
-        <button id="btn-compare" class="action secondary">Benchmark 3PL</button>
-      </div>
+        <div class="grade-badge" id="sheet-grade">A</div>
     </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:20px;">
+        <div style="background:rgba(255,255,255,0.03); padding:15px; border-radius:15px;">
+            <div style="color:var(--aqua); font-size:10px; font-weight:900;">POWER CAPACITY</div>
+            <div style="font-size:20px; font-weight:900;" id="sheet-power">4.5 MW</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03); padding:15px; border-radius:15px;">
+            <div style="color:var(--pink); font-size:10px; font-weight:900;">DRAYAGE ZONE</div>
+            <div style="font-size:20px; font-weight:900;" id="sheet-drayage">INNER</div>
+        </div>
+    </div>
+
+    <div id="viral-stat" style="margin-top:20px; border-left: 4px solid var(--neon-green); padding-left:15px;">
+        <p style="color:var(--neon-green); font-weight:900; margin:0;">3PL EFFICIENCY MATCH</p>
+        <h2 style="margin:5px 0;">98.4%</h2>
+    </div>
+
+    <button onclick="closeSheet()" style="width:100%; margin-top:30px; padding:18px; border-radius:15px; border:none; background:var(--aqua); font-weight:900; font-size:16px; cursor:pointer;">BOOK SITE VISIT</button>
   </div>
 
 <script>
-const STATE = {
-  verifiedOnly: false,
-  capacityOnly: false,
-  heatMode: "labor",
-  rawGeo: null,
-  comparisonTarget: null
-};
+  let map;
 
-const ATL_CENTER = [-84.39, 33.77];
-const ATL_ZOOM = 10;
+  async function initMap() {
+    const config = await fetch('/api/config').then(r => r.json());
+    mapboxgl.accessToken = config.mapboxToken;
 
-async function start(){
-  const configRes = await fetch("/api/config");
-  const config = await configRes.json();
-  mapboxgl.accessToken = config.mapboxToken;
-
-  const map = new mapboxgl.Map({
-    container: "map",
-    style: "mapbox://styles/blkluv/ckickwyl81snm19qste4bufgr",
-    center: ATL_CENTER,
-    zoom: ATL_ZOOM
-  });
-
-  map.addControl(new mapboxgl.NavigationControl());
-
-  map.on("load", async () => {
-    try {
-      const facilitiesRes = await fetch("/api/facilities");
-      STATE.rawGeo = await facilitiesRes.json();
-    } catch(e) { STATE.rawGeo = { type:"FeatureCollection", features:[] }; }
-
-    map.addSource("facilities", { type: "geojson", data: STATE.rawGeo, cluster: true, clusterMaxZoom: 13, clusterRadius: 50 });
-
-    map.addLayer({
-      id: "unclustered",
-      type: "circle",
-      source: "facilities",
-      filter: ["!", ["has","point_count"]],
-      paint: {
-        "circle-color": ["case", ["==", ["get","verified"], 1], "#ffd000", "#00ffea"],
-        "circle-radius": 8,
-        "circle-stroke-width": 1.5,
-        "circle-stroke-color": "#000"
-      }
+    map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/dark-v11', // Or your custom "blkluv" style
+      center: [-84.3880, 33.7490],
+      zoom: 10,
+      pitch: 45,
+      antialias: true
     });
 
-    // CLICK HANDLER
-    map.on("click", "unclustered", (e) => {
-      const p = e.features[0].properties;
+    map.on('load', async () => {
+      const facilities = await fetch('/api/facilities').then(r => r.json());
+
+      map.addSource('warehouses', {
+        type: 'geojson',
+        data: facilities
+      });
+
+      // Viral Layer: The Pulse effect for Class A
+      map.addLayer({
+        id: 'warehouse-glow',
+        type: 'circle',
+        source: 'warehouses',
+        paint: {
+          'circle-radius': 15,
+          'circle-color': '#00f2ff',
+          'circle-opacity': 0.2,
+          'circle-blur': 1
+        }
+      });
+
+      map.addLayer({
+        id: 'warehouse-points',
+        type: 'circle',
+        source: 'warehouses',
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 6, 15, 12],
+          'circle-color': [
+            'case',
+            ['==', ['get', 'grade'], 'A'], '#00f2ff',
+            ['==', ['get', 'grade'], 'B+'], '#ff007f',
+            '#ffffff'
+          ],
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#000'
+        }
+      });
+
+      map.on('click', 'warehouse-points', (e) => {
+        const props = e.features[0].properties;
+        openSheet(props);
+      });
       
-      if (STATE.comparisonTarget) {
-          renderComparison(STATE.comparisonTarget, p);
-          STATE.comparisonTarget = null;
-          document.getElementById('compare-notice').style.display = 'none';
-      } else {
-          openSheet(p);
-      }
+      // Add cursor changes
+      map.on('mouseenter', 'warehouse-points', () => map.getCanvas().style.cursor = 'pointer');
+      map.on('mouseleave', 'warehouse-points', () => map.getCanvas().style.cursor = '');
     });
+  }
 
-    // UI BUTTONS LOGIC
-    document.getElementById('sheet-close').onclick = () => document.getElementById('sheet').classList.remove('open');
-    
-    document.querySelectorAll('.tab').forEach(t => {
-        t.onclick = (e) => {
-            document.querySelectorAll('.tab, .tab-panel').forEach(el => el.classList.remove('active'));
-            t.classList.add('active');
-            document.getElementById('tab-' + t.dataset.tab).classList.add('active');
-        };
-    });
-
-    document.getElementById('btn-compare').onclick = () => {
-        STATE.comparisonTarget = JSON.parse(document.getElementById('btn-compare').dataset.current);
-        document.getElementById('sheet').classList.remove('open');
-        document.getElementById('compare-notice').style.display = 'block';
-    };
-  });
-}
-
-function openSheet(p) {
-    const s = document.getElementById('sheet');
+  function openSheet(p) {
     document.getElementById('sheet-title').innerText = p.name;
-    document.getElementById('btn-compare').dataset.current = JSON.stringify(p);
-    
-    document.getElementById('sheet-stats').innerHTML = `
-        <div class="stat"><div class="k">Drayage Zone</div><div class="v">${p.drayage_zone}</div></div>
-        <div class="stat"><div class="k">Power Capacity</div><div class="v">${p.power_mw} MW</div></div>
-        <div class="stat"><div class="k">Last-Mile Reach</div><div class="v">${p.last_mile_score}/100</div></div>
-        <div class="stat"><div class="k">Parking Spots</div><div class="v">${p.truck_parking}</div></div>
-    `;
-    
-    document.getElementById('tab-overview').innerHTML = `<div class="kv">This facility is optimized for <strong>${p.drayage_zone}</strong> operations with high-density power availability.</div>`;
-    s.classList.add('open');
-}
+    document.getElementById('sheet-power').innerText = p.power_mw + ' MW';
+    document.getElementById('sheet-grade').innerText = p.grade || 'C';
+    document.getElementById('sheet-drayage').innerText = p.drayage_zone === 'Inner Ring (Savannah/ATL)' ? 'INNER' : 'OUTER';
+    document.getElementById('sheet').classList.add('open');
+  }
 
-function renderComparison(f1, f2) {
-    openSheet(f2);
-    document.getElementById('sheet-title').innerText = "Benchmark Result";
-    document.getElementById('sheet-subtitle').innerText = `${f1.name} vs ${f2.name}`;
-    document.getElementById('tab-overview').innerHTML = `
-        <div class="stat" style="grid-column: span 2; background: rgba(255,0,255,0.1)">
-            <div class="k">Comparison Insight</div>
-            <div class="v">${f1.power_mw > f2.power_mw ? f1.name : f2.name} has superior power density for automation.</div>
-        </div>
-    `;
-}
+  function closeSheet() {
+    document.getElementById('sheet').classList.remove('open');
+  }
 
-start();
+  initMap();
 </script>
 </body>
 </html>
