@@ -10,46 +10,73 @@ export default async function handler(req, res) {
     out center tags;
   `;
 
-  const osmRes = await fetch(OVERPASS, {
-    method: "POST",
-    body: query
-  });
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
 
-  const osmData = await osmRes.json();
+    const osmRes = await fetch(OVERPASS, {
+      method: "POST",
+      body: query,
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "text/plain"
+      }
+    });
 
-  const features = osmData.elements.map(el => {
-    let lon, lat;
+    clearTimeout(timeout);
 
-    if (el.type === "node") {
-      lon = el.lon;
-      lat = el.lat;
-    } else if (el.type === "way" && el.center) {
-      lon = el.center.lon;
-      lat = el.center.lat;
-    } else {
-      return null;
+    if (!osmRes.ok) {
+      throw new Error(`Overpass returned ${osmRes.status}`);
     }
 
-    return {
-      type: "Feature",
-      properties: {
-        id: `${el.type}-${el.id}`,
-        name: el.tags?.name || "Warehouse Facility",
-        verified: 0,
-        inspected: 0,
-        utilization: null,
-        grade: null,
-        labor_index: Math.random()
-      },
-      geometry: {
-        type: "Point",
-        coordinates: [lon, lat]
-      }
-    };
-  }).filter(Boolean);
+    const osmData = await osmRes.json();
 
-  res.status(200).json({
-    type: "FeatureCollection",
-    features
-  });
+    const features = (osmData.elements || [])
+      .map((el) => {
+        let lon, lat;
+
+        if (el.type === "node") {
+          lon = el.lon;
+          lat = el.lat;
+        } else if (el.type === "way" && el.center) {
+          lon = el.center.lon;
+          lat = el.center.lat;
+        } else {
+          return null;
+        }
+
+        return {
+          type: "Feature",
+          properties: {
+            id: `${el.type}-${el.id}`,
+            name: el.tags?.name || "Warehouse Facility",
+            verified: 0,
+            inspected: 0,
+            utilization: null,
+            grade: null,
+            labor_index: Math.random(),
+            source: "OSM"
+          },
+          geometry: {
+            type: "Point",
+            coordinates: [lon, lat]
+          }
+        };
+      })
+      .filter(Boolean);
+
+    return res.status(200).json({
+      type: "FeatureCollection",
+      features
+    });
+
+  } catch (error) {
+    console.error("Overpass Error:", error.message);
+
+    // Return empty dataset instead of breaking map
+    return res.status(200).json({
+      type: "FeatureCollection",
+      features: []
+    });
+  }
 }
