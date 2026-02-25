@@ -22,7 +22,7 @@
         /* TikTok Style Header */
         #header {
             position: fixed; top: 0; width: 100%; height: 60px;
-            background: linear-gradient(90deg, var(--aqua), var(--pink));
+            background: linear-gradient(90deg, #00ffea, #ff00ff);
             display: flex; align-items: center; justify-content: center; gap: 15px;
             z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
@@ -30,7 +30,6 @@
         #header a {
             color: #000; text-decoration: none; background: #fff;
             padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold;
-            transition: 0.3s;
         }
 
         /* Bottom Sheet UI */
@@ -38,12 +37,12 @@
             position: fixed; left: 0; right: 0; bottom: 0; height: 55vh;
             background: #111; border-radius: 25px 25px 0 0;
             transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 2000; padding: 30px; border-top: 2px solid var(--aqua);
+            z-index: 2000; padding: 30px; border-top: 2px solid #00ffea;
         }
         #sheet.open { transform: translateY(0); }
         
         .stat-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
-        .grade-badge { font-size: 40px; font-weight: 900; color: var(--aqua); text-shadow: 0 0 10px var(--aqua); }
+        .grade-badge { font-size: 40px; font-weight: 900; color: #00ffea; text-shadow: 0 0 10px #00ffea; }
         
         #close-btn { position: absolute; top: 20px; right: 20px; background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
     </style>
@@ -63,7 +62,7 @@
         <button id="close-btn" onclick="closeSheet()">×</button>
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
-                <h2 id="s-name" style="margin:0; color:var(--aqua);">WAREHOUSE</h2>
+                <h2 id="s-name" style="margin:0; color:#00ffea;">WAREHOUSE</h2>
                 <p id="s-loc" style="margin:5px 0; color:#888;">Atlanta Industrial District</p>
             </div>
             <div class="grade-badge" id="s-grade">A</div>
@@ -71,21 +70,22 @@
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:20px;">
             <div class="stat-box">
-                <div style="font-size:10px; color:var(--aqua);">POWER CAPACITY</div>
+                <div style="font-size:10px; color:#00ffea;">POWER CAPACITY</div>
                 <div style="font-size:20px; font-weight:900;" id="s-power">4.5 MW</div>
             </div>
             <div class="stat-box">
-                <div style="font-size:10px; color:var(--pink);">DRAYAGE ZONE</div>
+                <div style="font-size:10px; color:#ff00ff;">DRAYAGE ZONE</div>
                 <div style="font-size:20px; font-weight:900;">INNER RING</div>
             </div>
         </div>
 
-        <button style="width:100%; margin-top:30px; padding:18px; border-radius:12px; border:none; background:var(--aqua); color:black; font-weight:900; cursor:pointer;">REQUEST SITE INSPECTION</button>
+        <button style="width:100%; margin-top:30px; padding:18px; border-radius:12px; border:none; background:#00ffea; color:black; font-weight:900; cursor:pointer;">REQUEST SITE INSPECTION</button>
     </div>
 
 <script>
-    // 1. Setup Map
+    // 1. Setup Map - REMEMBER TO REPLACE YOUR TOKEN
     mapboxgl.accessToken = "YOUR_MAPBOX_TOKEN";
+    
     const map = new mapboxgl.Map({
         container: "map",
         style: "mapbox://styles/mapbox/dark-v11",
@@ -94,8 +94,10 @@
         pitch: 45
     });
 
-    // 2. Load Data Directly (Fixed Connection)
+    // 2. Load Data Directly
     async function loadWarehouses() {
+        console.log("Starting warehouse scan...");
+        
         const query = `
             [out:json][timeout:25];
             (
@@ -116,24 +118,26 @@
 
             data.elements.forEach(el => {
                 const coords = el.type === "node" ? [el.lon, el.lat] : [el.center.lon, el.center.lat];
-                if (!coords[0]) return;
+                if (!coords || !coords[0]) return;
 
-                // Unique Value: Dynamic Grade and Power Generation for the Map
+                // Unique Value Generation
                 const randomPower = (Math.random() * 5 + 1).toFixed(1);
                 const grades = ['A', 'B+', 'A-'];
                 const randomGrade = grades[Math.floor(Math.random() * grades.length)];
 
-                // Create custom marker element for TikTok "Pop"
+                // Create custom marker element
                 const elMarker = document.createElement('div');
-                elMarker.style.width = '12px';
-                elMarker.style.height = '12px';
-                elMarker.style.backgroundColor = var(--aqua);
+                elMarker.className = 'custom-marker';
+                elMarker.style.width = '14px';
+                elMarker.style.height = '14px';
+                elMarker.style.backgroundColor = '#00ffea';
                 elMarker.style.borderRadius = '50%';
-                elMarker.style.boxShadow = '0 0 10px ' + var(--aqua);
+                elMarker.style.boxShadow = '0 0 12px #00ffea';
                 elMarker.style.cursor = 'pointer';
+                elMarker.style.border = '2px solid black';
 
                 // Add Marker to Map
-                const marker = new mapboxgl.Marker({ element: elMarker })
+                new mapboxgl.Marker({ element: elMarker })
                     .setLngLat(coords)
                     .addTo(map);
 
@@ -148,6 +152,7 @@
             });
         } catch (err) {
             console.error("Data Error:", err);
+            document.getElementById('counter').innerText = "OFFLINE";
         }
     }
 
@@ -162,6 +167,7 @@
         document.getElementById('sheet').classList.remove('open');
     }
 
+    // Trigger on load
     map.on('load', loadWarehouses);
 
 </script>
