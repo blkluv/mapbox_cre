@@ -1,3 +1,84 @@
 {
-  "facilities": []
+  "facilities": [
+    {
+      "id": "way-atl-fulton-1",
+      "name": "Fulton Industrial Mega-Hub",
+      "address": "Fulton Industrial Blvd, Atlanta, GA",
+      "coordinates": [-84.562, 33.741],
+      "power_mw": 8.5,
+      "dock_doors": 120,
+      "clear_height": 40,
+      "utilization": 0.35,
+      "grade": "A",
+      "drayage_zone": "Inner Ring (Savannah/ATL)",
+      "last_mile_score": 94,
+      "truck_parking": 210,
+      "verified": 1,
+      "verification_status": "verified"
+    },
+    {
+      "id": "node-atl-airport-dist",
+      "name": "Hartsfield-Jackson Logistics Ctr",
+      "address": "Charles W Grant Pkwy, Atlanta, GA",
+      "coordinates": [-84.412, 33.645],
+      "power_mw": 6.2,
+      "dock_doors": 92,
+      "clear_height": 36,
+      "utilization": 0.55,
+      "grade": "A",
+      "drayage_zone": "Inner Ring (Savannah/ATL)",
+      "last_mile_score": 99,
+      "truck_parking": 150,
+      "verified": 1,
+      "verification_status": "verified"
+    },
+    {
+      "id": "way-atl-clayton-75",
+      "name": "I-75 South Trade Center",
+      "address": "Hwy 42, Locust Grove, GA",
+      "coordinates": [-84.115, 33.345],
+      "power_mw": 4.0,
+      "dock_doors": 60,
+      "clear_height": 36,
+      "utilization": 0.72,
+      "grade": "B+",
+      "drayage_zone": "Outer Metro",
+      "last_mile_score": 68,
+      "truck_parking": 90,
+      "verified": 0,
+      "verification_status": "pending"
+    },
+    {
+      "id": "node-atl-gwinnett-85",
+      "name": "Gwinnett 85 Distribution Park",
+      "address": "Horizon Dr, Suwanee, GA",
+      "coordinates": [-84.061, 34.035],
+      "power_mw": 3.5,
+      "dock_doors": 48,
+      "clear_height": 32,
+      "utilization": 0.88,
+      "grade": "B",
+      "drayage_zone": "Outer Metro",
+      "last_mile_score": 82,
+      "truck_parking": 40,
+      "verified": 0,
+      "verification_status": "unclaimed"
+    },
+    {
+      "id": "way-atl-douglas-20",
+      "name": "I-20 West Commerce Ctr",
+      "address": "Riverside Pkwy, Douglasville, GA",
+      "coordinates": [-84.712, 33.732],
+      "power_mw": 5.0,
+      "dock_doors": 75,
+      "clear_height": 36,
+      "utilization": 0.20,
+      "grade": "A",
+      "drayage_zone": "Inner Ring (Savannah/ATL)",
+      "last_mile_score": 85,
+      "truck_parking": 110,
+      "verified": 1,
+      "verification_status": "verified"
+    }
+  ]
 }
