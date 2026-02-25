@@ -1,175 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>ATL WAREHOUSE | COMMAND CENTER</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATLWarehouse Grid</title>
 
-    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
 
-    <style>
-        :root {
-            --aqua: #00ffea;
-            --pink: #ff00ff;
-            --glass: rgba(10, 10, 10, 0.9);
-            --border: rgba(255, 255, 255, 0.1);
-        }
+<style>
+body { margin:0; padding:0; background:#0a0a0a; font-family:Arial; }
+#map { position:absolute; top:60px; bottom:0; width:100%; }
 
-        body { margin:0; padding:0; background:#0a0a0a; font-family: 'Inter', Arial, sans-serif; color: white; overflow: hidden; }
-        #map { position:absolute; top:0; bottom:0; width:100%; }
+#header {
+position:fixed;
+top:0;
+width:100%;
+height:60px;
+background:linear-gradient(90deg,#00ffea,#ff00ff);
+display:flex;
+align-items:center;
+justify-content:center;
+gap:30px;
+z-index:1000;
+font-weight:bold;
+}
 
-        /* TikTok Style Header */
-        #header {
-            position: fixed; top: 0; width: 100%; height: 60px;
-            background: linear-gradient(90deg, #00ffea, #ff00ff);
-            display: flex; align-items: center; justify-content: center; gap: 15px;
-            z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
+#header a {
+color:#000;
+text-decoration:none;
+background:#fff;
+padding:6px 12px;
+border-radius:6px;
+font-size:14px;
+}
 
-        #header a {
-            color: #000; text-decoration: none; background: #fff;
-            padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold;
-        }
+.mapboxgl-popup-content {
+background:#111 !important;
+color:#fff;
+border-radius:12px;
+}
 
-        /* Bottom Sheet UI */
-        #sheet {
-            position: fixed; left: 0; right: 0; bottom: 0; height: 55vh;
-            background: #111; border-radius: 25px 25px 0 0;
-            transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 2000; padding: 30px; border-top: 2px solid #00ffea;
-        }
-        #sheet.open { transform: translateY(0); }
-        
-        .stat-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
-        .grade-badge { font-size: 40px; font-weight: 900; color: #00ffea; text-shadow: 0 0 10px #00ffea; }
-        
-        #close-btn { position: absolute; top: 20px; right: 20px; background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
-    </style>
+.mapboxgl-popup-content h3 {
+color:#00ffea;
+margin-bottom:8px;
+}
+</style>
 </head>
 <body>
 
-    <div id="header">
-        <a href="https://ops.ATLwarehouse.com">⚙️ OPS</a>
-        <a href="https://ATLwarehouse.com">🏠 HOME</a>
-        <a href="https://tiktok.com/@atlwarehouse">🎵 TIKTOK</a>
-        <span id="counter" style="color: black; font-size: 14px; font-weight: 900;">SCANNING...</span>
-    </div>
+<div id="header">
+<a href="https://ops.ATLwarehouse.com">⚙️ OPS</a>
+<a href="https://ATLwarehouse.com">🏠 HOME</a>
+<a href="https://tiktok.com/@atlwarehouse">🎵 TIKTOK</a>
+<a href="https://TV.atlwarehouse.com">📺 TV</a>
+</div>
 
-    <div id="map"></div>
-
-    <div id="sheet">
-        <button id="close-btn" onclick="closeSheet()">×</button>
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <h2 id="s-name" style="margin:0; color:#00ffea;">WAREHOUSE</h2>
-                <p id="s-loc" style="margin:5px 0; color:#888;">Atlanta Industrial District</p>
-            </div>
-            <div class="grade-badge" id="s-grade">A</div>
-        </div>
-
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:20px;">
-            <div class="stat-box">
-                <div style="font-size:10px; color:#00ffea;">POWER CAPACITY</div>
-                <div style="font-size:20px; font-weight:900;" id="s-power">4.5 MW</div>
-            </div>
-            <div class="stat-box">
-                <div style="font-size:10px; color:#ff00ff;">DRAYAGE ZONE</div>
-                <div style="font-size:20px; font-weight:900;">INNER RING</div>
-            </div>
-        </div>
-
-        <button style="width:100%; margin-top:30px; padding:18px; border-radius:12px; border:none; background:#00ffea; color:black; font-weight:900; cursor:pointer;">REQUEST SITE INSPECTION</button>
-    </div>
+<div id="map"></div>
 
 <script>
-    // 1. Setup Map - REMEMBER TO REPLACE YOUR TOKEN
-    mapboxgl.accessToken = "YOUR_MAPBOX_TOKEN";
-    
-    const map = new mapboxgl.Map({
-        container: "map",
-        style: "mapbox://styles/mapbox/dark-v11",
-        center: [-84.39, 33.77],
-        zoom: 10,
-        pitch: 45
-    });
 
-    // 2. Load Data Directly
-    async function loadWarehouses() {
-        console.log("Starting warehouse scan...");
-        
-        const query = `
-            [out:json][timeout:25];
-            (
-              node["building"="warehouse"](33.45,-84.70,34.05,-84.10);
-              way["building"="warehouse"](33.45,-84.70,34.05,-84.10);
-            );
-            out center;
-        `;
+mapboxgl.accessToken = "YOUR_MAPBOX_TOKEN";
 
-        try {
-            const response = await fetch("https://overpass-api.de/api/interpreter", {
-                method: "POST",
-                body: query
-            });
-            const data = await response.json();
-            
-            document.getElementById('counter').innerText = `NETWORK: ${data.elements.length} UNITS`;
+const map = new mapboxgl.Map({
+container:"map",
+style:"mapbox://styles/mapbox/dark-v11",
+center:[-84.39,33.77],
+zoom:10
+});
 
-            data.elements.forEach(el => {
-                const coords = el.type === "node" ? [el.lon, el.lat] : [el.center.lon, el.center.lat];
-                if (!coords || !coords[0]) return;
+map.addControl(new mapboxgl.NavigationControl());
 
-                // Unique Value Generation
-                const randomPower = (Math.random() * 5 + 1).toFixed(1);
-                const grades = ['A', 'B+', 'A-'];
-                const randomGrade = grades[Math.floor(Math.random() * grades.length)];
+/* ---------------------------------
+   LOAD WAREHOUSES FROM OPENSTREETMAP
+---------------------------------- */
 
-                // Create custom marker element
-                const elMarker = document.createElement('div');
-                elMarker.className = 'custom-marker';
-                elMarker.style.width = '14px';
-                elMarker.style.height = '14px';
-                elMarker.style.backgroundColor = '#00ffea';
-                elMarker.style.borderRadius = '50%';
-                elMarker.style.boxShadow = '0 0 12px #00ffea';
-                elMarker.style.cursor = 'pointer';
-                elMarker.style.border = '2px solid black';
+async function loadWarehouses(){
 
-                // Add Marker to Map
-                new mapboxgl.Marker({ element: elMarker })
-                    .setLngLat(coords)
-                    .addTo(map);
+// Atlanta bounding box
+const query = `
+[out:json][timeout:25];
+(
+  node["building"="warehouse"](33.45,-84.70,34.05,-84.10);
+  way["building"="warehouse"](33.45,-84.70,34.05,-84.10);
+);
+out center;
+`;
 
-                // Open Bottom Sheet on Click
-                elMarker.addEventListener('click', () => {
-                    openSheet({
-                        name: el.tags?.name || "Industrial Facility",
-                        power: randomPower,
-                        grade: randomGrade
-                    });
-                });
-            });
-        } catch (err) {
-            console.error("Data Error:", err);
-            document.getElementById('counter').innerText = "OFFLINE";
-        }
-    }
+const response = await fetch("https://overpass-api.de/api/interpreter",{
+method:"POST",
+body:query
+});
 
-    function openSheet(data) {
-        document.getElementById('s-name').innerText = data.name;
-        document.getElementById('s-power').innerText = data.power + " MW";
-        document.getElementById('s-grade').innerText = data.grade;
-        document.getElementById('sheet').classList.add('open');
-    }
+const data = await response.json();
 
-    function closeSheet() {
-        document.getElementById('sheet').classList.remove('open');
-    }
+data.elements.forEach(el => {
 
-    // Trigger on load
-    map.on('load', loadWarehouses);
+let coords;
+
+if(el.type === "node"){
+coords = [el.lon, el.lat];
+}
+else if(el.type === "way" && el.center){
+coords = [el.center.lon, el.center.lat];
+}
+else return;
+
+const name = el.tags?.name || "Warehouse Facility";
+
+const popupHTML = `
+<div style="max-width:280px;">
+<h3>${name}</h3>
+<p>📦 Building Type: Warehouse</p>
+<p>📍 Atlanta Industrial Region</p>
+<hr style="border-color:#333;">
+<button style="
+width:100%;
+padding:8px;
+background:#00ffea;
+border:none;
+font-weight:bold;
+cursor:pointer;">
+Request Info
+</button>
+</div>
+`;
+
+new mapboxgl.Marker({color:"#00ffea"})
+.setLngLat(coords)
+.setPopup(new mapboxgl.Popup({maxWidth:"300px"}).setHTML(popupHTML))
+.addTo(map);
+
+});
+
+}
+
+loadWarehouses();
 
 </script>
+
 </body>
 </html>
